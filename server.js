@@ -1,14 +1,26 @@
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
-const io = require("socket.io")(http);
+const server = app.listen(3000, function () {
+	console.log("server running on port 3000");
+  });
+const io = require("socket.io")(server, {
+	cors: {
+	  origin: "*",
+	},
+  });
+
+//跨域问题解决方面
+const cors = require('cors'); 
+app.use(cors())
+
 
 /* 定义游戏参数 */
 // 定义玩家列表
 const _players = [];
 const _readyPlayers = [];
 // 定义默认头像
-const defaultAvatar = "/images/avatar.jpg";
+const defaultAvatar = "../../public/images/avatar.jpg";
 // 定义默认音符
 const _notesList = [
 	"simple/1 C",
@@ -38,7 +50,7 @@ io.on("connection", (socket) => {
 			name: data.name,
 			avatar: defaultAvatar,
 		});
-
+		
 		// 将玩家列表发送给所有连接的客户端
 		io.emit("updatePlayers", _players);
 
@@ -89,8 +101,3 @@ function generateRandomNote() {
 	return _notesList[Math.floor(Math.random() * _notesList.length)];
 }
 
-// 启动服务器
-const port = 3000;
-http.listen(port, () => {
-	console.log(`Server listening on port ${port}`);
-});
