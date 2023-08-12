@@ -1,17 +1,12 @@
 <template>
 	<div id="app">
-		<game msg="Welcome to Your Vue.js App" />
+		<router-view></router-view>
 	</div>
 </template>
 
 <script>
-import game from "@/components/game";
-
 export default {
 	name: "NotesTick",
-	components: {
-		game,
-	},
 };
 </script>
 
