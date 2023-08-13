@@ -40,7 +40,10 @@ const _readyPlayersSet = new Set();
 // 定义默认头像
 const defaultAvatar = "/images/avatar.jpg";
 // 定义默认音符
-const _notesList = ["C1", "D2", "E3", "F4", "G5", "A6", "B7"];
+// const _notesList = ["C1", "D2", "E3", "F4", "G5", "A6", "B7"];
+const _notesList = ["C4", "C#4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+const _unassignNotes = new Set(_notesList);
+const _assignNotes = new Set();
 
 // 静态文件服务
 app.use(express.static("public"));
@@ -51,7 +54,12 @@ io.use((socket, next) => {
 
 	// 判断用户名是否重复
 	if (_playersSet.has(name)) {
-		return next(new Error("Username is already taken"));
+		return next(new Error("Username is already taken!"));
+	}
+	if (_unassignNotes.size === 0) {
+		return next(
+			new Error("The rome is already full, please wait and try again.")
+		);
 	}
 
 	// 将新用户名添加到已连接的用户名集合
@@ -66,14 +74,15 @@ io.on("connection", (socket) => {
 	console.log("A user connected", socket.id);
 	const name = socket.handshake.query.name;
 
-	// 生成随机音阶的音符
-	const note = generateRandomNote();
+	// 分配音符
+	const note = toAssignNote();
 
 	// 添加玩家到列表
 	let newPlayer = {
 		name,
 		id: socket.id,
 		avatar: defaultAvatar,
+		note: note,
 	};
 
 	_playersObj[socket.id] = newPlayer;
@@ -142,11 +151,19 @@ function removeInactiveUser(socket) {
 		_readyPlayersSet.delete(user.name);
 	}
 
+	if (_assignNotes.has(user.note)) {
+		_assignNotes.delete(user.note);
+		_unassignNotes.add(user.note);
+	}
+
 	console.log(user.name, _playersObj, _playersSet, _readyPlayersSet);
 }
 
-// 生成随机音阶的音符的函数
-function generateRandomNote() {
-	// 添加你的生成随机音阶的音符的逻辑
-	return _notesList[Math.floor(Math.random() * _notesList.length)];
+// 分配音符的函数
+function toAssignNote() {
+	const note = _unassignNotes.values().next().value;
+	_unassignNotes.delete(note);
+	_assignNotes.add(note);
+
+	return note;
 }
