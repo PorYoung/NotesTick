@@ -32,16 +32,14 @@ export default {
 					id: index,
 					style: {
 						height: `${duration * 100}px`,
-						left: `${noteMapping[item.name]}%`,
+						left: `${6 + noteMapping[item.name]}%` ,
 						animationDuration: `${item.velocity * 3}s`,
 						animationDelay: `${item.time}s`,
-						background: `linear-gradient(45deg, rgba(255, 0, 0, 0.8), rgba(0, 0, 255, 0.8))`,
+						background: 'linear-gradient(to right, rgb(198, 255, 221), rgb(251, 215, 134), rgb(247, 121, 125))'
 					},
 				};
 				this.notes.push(note);
 			});
-			// 播放音符
-			this.synth.triggerAttackRelease("C4", "8n"); // C4 音高，8n 持续时间
 		},
 		startAudio() {
 			if (!this.audioContextStarted) {
@@ -64,7 +62,6 @@ export default {
 			this.notes[index].style.opacity = 1;
 		},
 		removeNote(id) {
-			// console.log(this.notes)
 			const index = this.notes.findIndex((note) => note.id === id);
 			if (index !== -1) {
 				this.notes.splice(index, 1);
@@ -77,8 +74,9 @@ export default {
 <style lang="scss" scoped>
 .note-container {
 	position: relative;
-	width: 100%;
+	width: 88%;
 	height: 100%;
+	margin-left: 6%;
 	overflow: hidden;
 
 	&::after {
@@ -94,15 +92,15 @@ export default {
 
 .note {
 	position: absolute;
-	width: 30px;
+	width: 1%;
 	opacity: 0; /* 初始时设置音符不可见 */
 	animation: fallAnimation linear;
 }
 
 @keyframes fallAnimation {
 	0% {
-		transform: translateY(-20px);
-		opacity: 0;
+		transform: translateY(-100%);
+		opacity: 1;
 	}
 	100% {
 		transform: translateY(100vh);
