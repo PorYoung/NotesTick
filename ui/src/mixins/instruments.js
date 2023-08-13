@@ -48,14 +48,15 @@ const InstrumentConstructor = (NAME = "Salamander piano") => {
 	}
 	const caller = sampler ? sampler : synth;
 	return {
+		name: NAME,
 		sampler: sampler,
 		synth: synth,
 		caller: caller,
 		triggerAttack: (note, velocity = 1) => {
 			caller.triggerAttack(note, "+0", velocity);
 		},
-		triggerAttackRelease: (note, duration) => {
-			caller.triggerAttackRelease(note, duration);
+		triggerAttackRelease: (note, duration, time = "+0", velocity = 1) => {
+			caller.triggerAttackRelease(note, duration, time, velocity);
 		},
 		triggerRelease: (note, time = "+0.1") => {
 			if (sampler) {
@@ -75,6 +76,10 @@ export default {
 		instrument: null;
 	},
 	methods: {
+		/**
+		 * Tone Sampler资源加载
+		 * 资源需要请求网络，action作为回调函数在资源加载完成后执行
+		 */
 		loadInstrument(NAME, action) {
 			this.instrument = InstrumentConstructor(NAME);
 			Tone.loaded().then(() => {

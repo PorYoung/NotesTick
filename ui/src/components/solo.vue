@@ -39,10 +39,11 @@
 <script>
 import io from "socket.io-client";
 import CommonMixin from "@/mixins/common";
-import Instruments from "@/mixins/instruments";
+import InstrumentsMixin from "@/mixins/instruments";
+import MidiMixin from "@/mixins/midi";
 export default {
 	name: "Solo",
-	mixins: [CommonMixin, Instruments],
+	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
 	data() {
 		return {
 			/* 页面参数 */
@@ -70,8 +71,6 @@ export default {
 		}
 	},
 	methods: {
-		/*  */
-		getMidiJson() {},
 		/* Socket 相关方法 */
 		createSocket(name) {
 			// 连接WebSocket服务器
@@ -151,6 +150,8 @@ export default {
 					this.preloading = false;
 				});
 			}
+			this.getMidiJson().then(() => [this.playCurrentNote()]);
+			return;
 			// 发送开始事件给服务器
 			this.ready
 				? this.socket.emit("joinGame", { name: this.name })
