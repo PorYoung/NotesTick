@@ -7,30 +7,15 @@
 
 <template>
 	<div>
-		<!-- 请求乐谱和加载Tone资源时，页面进入加载状态 -->
-		<el-row v-loading.fullscreen.lock="preloading"></el-row>
-		<!-- 音符雨 -->
-		<el-row class="notes-rain"></el-row>
-		<!-- 玩家信息盒子 -->
-		<div>
-			<!-- 状态栏 -->
-			<div>
-				<button id="start" @click="joinGame">
-					{{ readyText }} {{ _len(readyPlayers) }} /
-					{{ _len(players) }} 玩家已准备
-				</button>
-			</div>
-			<!-- 玩家列表 -->
-			<div
-				id="players"
-				ref="players"
-				v-for="item in players"
-				:key="item.name"
-			>
-				<div class="player">
-					<img src="@static/images/avatar.jpg" />
-					<span>{{ item.name }}</span>
-				</div>
+		<piano />
+		<button id="start" @click="joinGame">
+			{{ readyText }} {{ _len(readyPlayers) }} /
+			{{ _len(players) }} 玩家已准备
+		</button>
+		<div id="players" ref="players" v-for="item in players">
+			<div class="player">
+				<img src="@static/images/avatar.jpg" />
+				<span>{{ item.name }}</span>
 			</div>
 		</div>
 	</div>
@@ -38,12 +23,14 @@
 
 <script>
 import io from "socket.io-client";
+import piano from './piano.vue'
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
 export default {
 	name: "Solo",
 	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
+	components: { piano },
 	data() {
 		return {
 			/* 页面参数 */
