@@ -6,24 +6,29 @@
 -->
 
 <template>
-	<div>
-		<piano />
-		<button id="start" @click="joinGame">
-			{{ readyText }} {{ _len(readyPlayers) }} /
-			{{ _len(players) }} 玩家已准备
-		</button>
-		<div id="players" ref="players" v-for="item in players">
-			<div class="player">
-				<img src="@static/images/avatar.jpg" />
-				<span>{{ item.name }}</span>
+	<el-container class="main-wrapper">
+		<el-header>进度条</el-header>
+		<el-main>
+			<piano />
+		</el-main>
+		<el-footer>
+			<button id="start" @click="joinGame">
+				{{ readyText }} {{ _len(readyPlayers) }} /
+				{{ _len(players) }} 玩家已准备
+			</button>
+			<div id="players" ref="players" v-for="item in players">
+				<div class="player">
+					<img src="@static/images/avatar.jpg" />
+					<span>{{ item.name }}</span>
+				</div>
 			</div>
-		</div>
-	</div>
+		</el-footer>
+	</el-container>
 </template>
 
 <script>
 import io from "socket.io-client";
-import piano from './piano.vue'
+import piano from "./piano.vue";
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
@@ -194,4 +199,18 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.el-container {
+	overflow: hidden;
+	height: 100vh !important;
+}
+.el-header {
+	height: 10vh !important;
+}
+.el-main {
+	height: 70vh !important;
+}
+.el-footer {
+	height: 30vh !important;
+}
+</style>
