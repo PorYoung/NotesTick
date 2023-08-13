@@ -1,5 +1,29 @@
 @import "./variables";
 
+/* base page */
+#app {
+	font-family: Avenir, Helvetica, Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-align: center;
+	color: #fff;
+	margin-top: 60px;
+}
+
+/* background */
+.background {
+	opacity: 1;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color: #000;
+	animation: hue-rot 15s linear 0s infinite alternate;
+	transition: opacity 2s ease 1.5s;
+	z-index: -1;
+}
+
 #players {
 	display: flex;
 	flex-wrap: wrap;

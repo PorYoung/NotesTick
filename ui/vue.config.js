@@ -12,6 +12,10 @@ module.exports = {
 					"^/api": "",
 				},
 			},
+			"/static": {
+				target: httpServer,
+				changeOrigin: true,
+			},
 			"/socket.io": {
 				target: wsServer,
 				ws: true,

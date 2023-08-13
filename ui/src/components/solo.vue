@@ -1,26 +1,57 @@
+<!--
+  @name: solo.vue
+  @date: 2023-08-12
+  @version：0.0.1
+  @describe: 合奏模式页面
+-->
+
 <template>
 	<div>
-		<button id="start" @click="joinGame">
-			{{ readyText }} {{ _len(readyPlayers) }} /
-			{{ _len(players) }} 玩家已准备
-		</button>
-		<div id="players" ref="players" v-for="item in players">
-			<div class="player">
-				<img src="@static/images/avatar.jpg" />
-				<span>{{ item.name }}</span>
+		<!-- 请求乐谱和加载Tone资源时，页面进入加载状态 -->
+		<el-row v-loading.fullscreen.lock="preloading"></el-row>
+		<!-- 音符雨 -->
+		<el-row class="notes-rain"></el-row>
+		<!-- 玩家信息盒子 -->
+		<div>
+			<!-- 状态栏 -->
+			<div>
+				<button id="start" @click="joinGame">
+					{{ readyText }} {{ _len(readyPlayers) }} /
+					{{ _len(players) }} 玩家已准备
+				</button>
+			</div>
+			<!-- 玩家列表 -->
+			<div
+				id="players"
+				ref="players"
+				v-for="item in players"
+				:key="item.name"
+			>
+				<div class="player">
+					<img src="@static/images/avatar.jpg" />
+					<span>{{ item.name }}</span>
+				</div>
 			</div>
 		</div>
-		<audio id="noteAudio" ref="noteAudio"></audio>
 	</div>
 </template>
 
 <script>
 import io from "socket.io-client";
+import CommonMixin from "@/mixins/common";
+import Instruments from "@/mixins/instruments";
 export default {
 	name: "Solo",
+	mixins: [CommonMixin, Instruments],
 	data() {
 		return {
+			/* 页面参数 */
+			preloading: true,
+			/* 加载 MIDI 文件 */
+			midiUrl: "",
+			/* Socket 相关变量 */
 			socket: null,
+			/* 音符控制相关变量 */
 			keyLock: false,
 			ready: false,
 			readyText: "准备",
@@ -33,19 +64,15 @@ export default {
 	},
 	mounted() {
 		const name = prompt("请输入您的名字");
-		// this.players.push({ name });
+		this.preloading = false;
 		if (name) {
 			this.createSocket(name);
 		}
 	},
 	methods: {
-		_len(o) {
-			return o instanceof Array
-				? o.length
-				: o instanceof Set
-				? o.size
-				: Object.keys(o).length;
-		},
+		/*  */
+		getMidiJson() {},
+		/* Socket 相关方法 */
 		createSocket(name) {
 			// 连接WebSocket服务器
 			this.socket = io({
@@ -71,8 +98,21 @@ export default {
 
 			// 监听播放音符事件
 			this.socket.on("playNote", (data) => {
+				if (data.id === this.socket.id) return;
+
 				// 播放音符声音
 				this.playSound(data.note);
+
+				// 闪烁头像
+				this.blinkAvatar(data.id);
+			});
+
+			// 监听播放音符事件
+			this.socket.on("stopNote", (data) => {
+				if (data.id === this.socket.id) return;
+
+				// 播放音符声音
+				this.stopSound(data.note);
 
 				// 闪烁头像
 				this.blinkAvatar(data.id);
@@ -93,6 +133,7 @@ export default {
 		onError(err) {
 			console.error(err);
 			alert(err);
+			this.$router.replace("/home");
 		},
 		onDisConnect(reason) {
 			console.error(reason);
@@ -104,6 +145,12 @@ export default {
 		joinGame() {
 			this.ready = !this.ready;
 			this.readyText = this.ready ? "取消准备" : "准备";
+			if (this.ready && !this.instrument) {
+				this.preloading = true;
+				this.loadInstrument("Salamander piano", () => {
+					this.preloading = false;
+				});
+			}
 			// 发送开始事件给服务器
 			this.ready
 				? this.socket.emit("joinGame", { name: this.name })
@@ -117,14 +164,20 @@ export default {
 			window.addEventListener("keyup", this.onKeyUp);
 		},
 		onKeyDown(e) {
+			if (!this.ready || !this.instrument) return;
+
 			if (!this.keyLock && e.key == " ") {
+				this.instrument.triggerAttack(this.myNote);
 				this.keyLock = true;
 				this.socket.emit("keydown", { note: this.myNote });
 				this.blinkAvatar();
 			}
 		},
 		onKeyUp(e) {
+			if (!this.ready || !this.instrument) return;
+
 			if (this.keyLock && e.key == " ") {
+				this.instrument.triggerRelease(this.myNote);
 				this.keyLock = false;
 				this.socket.emit("keyup", { note: this.myNote });
 			}
@@ -134,13 +187,10 @@ export default {
 		// 播放音符的函数
 		playSound(note) {
 			console.log("播放音符声音", note);
-			const noteAudio = this.$refs.noteAudio;
-
-			// 设置音频源
-			noteAudio.src = require(`@static/sound/${note}.mp3`);
-			console.log(noteAudio.play);
-			// 播放音频
-			noteAudio.play();
+			this.instrument.triggerAttack(note);
+		},
+		stopSound(note) {
+			this.instrument.triggerRelease(note);
 		},
 		// 闪烁头像的函数
 		blinkAvatar(id) {

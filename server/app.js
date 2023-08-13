@@ -40,15 +40,7 @@ const _readyPlayersSet = new Set();
 // 定义默认头像
 const defaultAvatar = "/images/avatar.jpg";
 // 定义默认音符
-const _notesList = [
-	"simple/1 C",
-	"simple/2 D",
-	"simple/3 E",
-	"simple/4 F",
-	"simple/5 G",
-	"simple/6 A",
-	"simple/7 B",
-];
+const _notesList = ["C1", "D2", "E3", "F4", "G5", "A6", "B7"];
 
 // 静态文件服务
 app.use(express.static("public"));
@@ -88,6 +80,7 @@ io.on("connection", (socket) => {
 
 	// 将玩家列表发送给所有连接的客户端
 	io.emit("updatePlayers", _playersObj);
+	io.emit("updateReadyPlayers", [..._readyPlayersSet]);
 
 	// 将音符发送给连接的客户端
 	socket.emit("genNote", { id: socket.id, note });
@@ -111,6 +104,13 @@ io.on("connection", (socket) => {
 		console.log(data);
 		// 广播按下空格键事件给所有连接的客户端
 		io.emit("playNote", { id: socket.id, note: data.note });
+	});
+
+	// 处理释放空格键事件
+	socket.on("keyup", (data) => {
+		console.log(data);
+		// 广播按下空格键事件给所有连接的客户端
+		io.emit("stopNote", { id: socket.id, note: data.note });
 	});
 
 	// 处理断开连接事件
