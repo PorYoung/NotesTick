@@ -8,7 +8,7 @@ export default {
 	data() {
 		return {
 			midiNotes: [],
-			vRatio: 0.75,
+			vRatio: 0.5,
 		};
 	},
 	methods: {
