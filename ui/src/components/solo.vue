@@ -11,7 +11,7 @@
 			<el-progress :percentage="50" status="exception"></el-progress>
 		</el-header>
 		<el-main>
-			<piano />
+			<piano :midiJson="this.midiNotes" ref="piano" />
 		</el-main>
 		<el-footer>
 			<button id="start" @click="joinGame">
@@ -55,6 +55,8 @@ export default {
 			},
 			readyPlayers: [],
 			myNote: null,
+			/* 音符雨 */
+			rainStarted: false,
 		};
 	},
 	mounted() {
@@ -142,15 +144,18 @@ export default {
 				this.preloading = true;
 				this.loadInstrument("Salamander piano", () => {
 					this.preloading = false;
-					this.getMidiJson().then(() => [
-						this.playCurrentNotesStep(),
-					]);
+					this.getMidiJson().then((notes) => {
+						this.playCurrentNotesStep();
+						this.$refs.piano.$emit("startRain");
+					});
 					return;
 					// 发送开始事件给服务器
 					this.ready
 						? this.socket.emit("joinGame", { name: this.name })
 						: this.socket.emit("cancelReady", { name: this.name });
 				});
+			} else {
+				this.$refs.piano.$emit("stopRain");
 			}
 		},
 		// 监听键盘事件

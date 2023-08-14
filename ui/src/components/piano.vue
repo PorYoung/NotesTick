@@ -1,5 +1,5 @@
 <template>
-	<div class="note-container" @click="startAudio">
+	<div class="note-container" v-loading.fullscreen.lock="preloading">
 		<div
 			v-for="note in notes"
 			:key="note.id"
@@ -13,35 +13,52 @@
 
 <script>
 import * as Tone from "tone";
-import musicJson from "../../static/js/jsons";
-import noteMapping from "../../static/js/noteMapping";
+import noteMapping from "@static/js/noteMapping";
+import MidiMixin from "@/mixins/midi";
 export default {
+	props: {
+		midiJson: null,
+	},
+	mixins: [MidiMixin],
 	data() {
 		return {
-			musicJson: musicJson,
+			preloading: false,
 			notes: [],
 			synth: new Tone.Synth().toDestination(),
 			audioContextStarted: false,
+			midiName: "我爱你中国",
 		};
 	},
 	methods: {
-		createNote() {
-			this.musicJson.forEach((item, index) => {
+		async loadMidiJson() {
+			this.preloading = true;
+			const midiJson = await this.getMidiJson();
+			this.preloading = false;
+
+			return midiJson;
+		},
+		async createNote() {
+			this.midiJson.forEach((item, index) => {
 				let duration = item.duration;
 				const note = {
 					id: index,
 					style: {
 						height: `${duration * 100}px`,
-						left: `${6 + noteMapping[item.name]}%` ,
+						left: `${6 + noteMapping[item.name]}%`,
 						animationDuration: `${item.velocity * 3}s`,
 						animationDelay: `${item.time}s`,
-						background: 'linear-gradient(to right, rgb(198, 255, 221), rgb(251, 215, 134), rgb(247, 121, 125))'
+						background:
+							"linear-gradient(to right, rgb(198, 255, 221), rgb(251, 215, 134), rgb(247, 121, 125))",
 					},
 				};
 				this.notes.push(note);
 			});
 		},
-		startAudio() {
+		async startAudio() {
+			const midiJson = this.midiJson
+				? this.midiJson
+				: await loadMidiJson();
+
 			if (!this.audioContextStarted) {
 				Tone.start();
 				this.audioContextStarted = true;
@@ -67,6 +84,15 @@ export default {
 				this.notes.splice(index, 1);
 			}
 		},
+	},
+	mounted() {
+		this.$on("startRain", () => {
+			this.startAudio();
+		});
+		this.$on("stopRain", () => {
+			this.notes = [];
+			Tone.Transport.stop();
+		});
 	},
 };
 </script>

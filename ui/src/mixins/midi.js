@@ -13,9 +13,9 @@ export default {
 	},
 	methods: {
 		/*  */
-		async getMidiJson() {
-			// const midi = await Midi.fromUrl("/static/midi/qingtian.mid");
-			const midi = await Midi.fromUrl("/static/midi/我爱你中国.mid");
+		async getMidiJson(midiName = "我爱你中国") {
+			const midiUrl = `/static/midi/${midiName}.mid`;
+			const midi = await Midi.fromUrl(midiUrl);
 			//the file name decoded from the first track
 			const name = midi.name;
 
@@ -26,6 +26,7 @@ export default {
 			);
 			this.midiNotes = notes;
 
+			return notes;
 			//get the tracks
 			// midi.tracks.forEach((track) => {
 			// 	//tracks have notes and controlChanges
