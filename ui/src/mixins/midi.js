@@ -8,7 +8,7 @@ export default {
 	data() {
 		return {
 			midiNotes: [],
-			vRatio: 1,
+			vRatio: 0.75,
 		};
 	},
 	methods: {
@@ -42,8 +42,8 @@ export default {
 					// 时间*vRatio 表示 1/vRatio倍速进行
 					this.instrument.triggerAttackRelease(
 						note.name,
-						note.duration * this.vRatio,
-						note.time * this.vRatio + now,
+						note.duration / this.vRatio,
+						note.time / this.vRatio + now,
 						note.velocity
 					);
 				} catch (exp) {
@@ -63,12 +63,12 @@ export default {
 				);
 				this.instrument.triggerAttack(
 					note.name,
-					note.time * this.vRatio + now,
+					note.time / this.vRatio + now,
 					note.velocity
 				);
 				this.instrument.triggerRelease(
 					note.name,
-					(note.duration + note.time) * this.vRatio + now
+					(note.duration + note.time) / this.vRatio + now
 				);
 			});
 		},
@@ -80,11 +80,11 @@ export default {
 						"+0",
 						note.velocity
 					);
-				}, note.time * 1000 * this.vRatio);
+				}, (note.time * 1000) / this.vRatio);
 				setTimeout(() => {
 					this.instrument.triggerRelease(
 						note.name,
-						(note.duration + note.time) * 1000 * this.vRatio
+						((note.duration + note.time) * 1000) / this.vRatio
 					);
 				});
 			});
