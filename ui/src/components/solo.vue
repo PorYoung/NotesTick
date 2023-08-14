@@ -144,10 +144,11 @@ export default {
 				this.preloading = true;
 				// 加载播放环境
 				this.loadInstrument("Salamander piano", () => {
-                    // 获取midi文件并解析为JSON
+					// 获取midi文件并解析为JSON
 					this.getMidiJson().then((notes) => {
-                        // 播放notes
-						this.playCurrentNotesStep();
+						// 播放notes
+						this.playCurrentNotesTimer();
+						// 启动音乐雨
 						this.$refs.piano.$emit("startRain", notes);
 					});
 
@@ -171,6 +172,8 @@ export default {
 			window.addEventListener("keyup", this.onKeyUp);
 		},
 		onKeyDown(e) {
+			e.preventDefault();
+
 			if (!this.ready || !this.instrument) return;
 
 			if (!this.keyLock && e.key == " ") {
