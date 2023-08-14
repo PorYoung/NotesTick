@@ -8,6 +8,7 @@ export default {
 	data() {
 		return {
 			midiNotes: [],
+			vRatio: 1,
 		};
 	},
 	methods: {
@@ -47,10 +48,10 @@ export default {
 			// 	//track.instrument.name
 			// });
 		},
-		playCurrentNote() {
+		playCurrentNotes() {
 			const now = Tone.now() + 0.5;
 			this.midiNotes.forEach((note) => {
-				console.log(
+				console.debug(
 					now,
 					note.name,
 					note.duration,
@@ -58,10 +59,11 @@ export default {
 					note.velocity
 				);
 				try {
+					// 时间*vRatio 表示 1/vRatio倍速进行
 					this.instrument.triggerAttackRelease(
 						note.name,
-						note.duration,
-						note.time + now,
+						note.duration * this.vRatio,
+						note.time * this.vRatio + now,
 						note.velocity
 					);
 				} catch (exp) {
@@ -69,14 +71,35 @@ export default {
 				}
 			});
 		},
-		playCurrentNoteV1() {
+		playCurrentNotesStep() {
+			const now = Tone.now() + 0.5;
+			this.midiNotes.forEach((note) => {
+				console.debug(
+					now,
+					note.name,
+					note.duration,
+					note.time + now,
+					note.velocity
+				);
+				this.instrument.triggerAttack(
+					note.name,
+					note.time * this.vRatio + now,
+					note.velocity
+				);
+				this.instrument.triggerRelease(
+					note.name,
+					(note.duration + note.time) * this.vRatio + now
+				);
+			});
+		},
+		playCurrentNotesSingleTimer() {
 			playStartTime = playStartTime ? playStartTime : +new Date();
 			let now = +new Date();
 			let progress = now - playStartTime;
 			let notes = this.midiNotes;
 			if (currentNoteIndex < notes.length) {
 				currentNote = notes[currentNoteIndex];
-				if (currentNote.time * 1000 < progress) {
+				if (currentNote.time * 1000 <= progress) {
 					this.instrument.triggerAttackRelease(
 						currentNote.name,
 						currentNote.duration,

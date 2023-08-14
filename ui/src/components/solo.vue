@@ -6,8 +6,10 @@
 -->
 
 <template>
-	<el-container class="main-wrapper">
-		<el-header>进度条</el-header>
+	<el-container v-loading.fullscreen.lock="preloading" class="main-wrapper">
+		<el-header>
+			<el-progress :percentage="50" status="exception"></el-progress>
+		</el-header>
 		<el-main>
 			<piano />
 		</el-main>
@@ -140,14 +142,16 @@ export default {
 				this.preloading = true;
 				this.loadInstrument("Salamander piano", () => {
 					this.preloading = false;
+					this.getMidiJson().then(() => [
+						this.playCurrentNotesStep(),
+					]);
+					return;
+					// 发送开始事件给服务器
+					this.ready
+						? this.socket.emit("joinGame", { name: this.name })
+						: this.socket.emit("cancelReady", { name: this.name });
 				});
 			}
-			this.getMidiJson().then(() => [this.playCurrentNote()]);
-			return;
-			// 发送开始事件给服务器
-			this.ready
-				? this.socket.emit("joinGame", { name: this.name })
-				: this.socket.emit("cancelReady", { name: this.name });
 		},
 		// 监听键盘事件
 		addKeyDownListener() {
