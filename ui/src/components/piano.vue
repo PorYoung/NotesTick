@@ -43,8 +43,8 @@ export default {
 					style: {
 						height: `${duration * 100}px`,
 						left: `${6 + noteMapping[item.name]}%`,
-						animationDuration: `${item.velocity * 3}s`,
-						animationDelay: `${item.time}s`,
+						animationDuration: `${item.velocity * 6}s`,
+						animationDelay: `${2 * item.time}s`,
 						background:
 							"linear-gradient(to right, rgb(198, 255, 221), rgb(251, 215, 134), rgb(247, 121, 125))",
 					},

@@ -146,10 +146,12 @@ export default {
 				this.loadInstrument("Salamander piano", () => {
 					// 获取midi文件并解析为JSON
 					this.getMidiJson().then((notes) => {
-						// 播放notes
-						this.playCurrentNotesTimer();
 						// 启动音乐雨
 						this.$refs.piano.$emit("startRain", notes);
+						setTimeout(() => {
+							// 播放notes
+							this.playCurrentNotesTimer();
+						},2550)
 					});
 
 					// 结束加载动画
