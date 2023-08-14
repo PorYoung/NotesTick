@@ -83,8 +83,9 @@ export default {
 		loadInstrument(NAME, action) {
 			this.instrument = InstrumentConstructor(NAME);
 			Tone.loaded().then(() => {
-				Tone.start();
-				typeof action === "function" && action();
+				Tone.start().then(() => {
+					typeof action === "function" && action();
+				});
 			});
 		},
 	},

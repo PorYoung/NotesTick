@@ -11,7 +11,7 @@
 			<el-progress :percentage="50" status="exception"></el-progress>
 		</el-header>
 		<el-main>
-			<piano :midiJson="this.midiNotes" ref="piano" />
+			<piano ref="piano" />
 		</el-main>
 		<el-footer>
 			<button id="start" @click="joinGame">
@@ -56,7 +56,6 @@ export default {
 			readyPlayers: [],
 			myNote: null,
 			/* 音符雨 */
-			rainStarted: false,
 		};
 	},
 	mounted() {
@@ -141,13 +140,19 @@ export default {
 			this.ready = !this.ready;
 			this.readyText = this.ready ? "取消准备" : "准备";
 			if (this.ready && !this.instrument) {
+				// 显示加载动画
 				this.preloading = true;
+				// 加载播放环境
 				this.loadInstrument("Salamander piano", () => {
-					this.preloading = false;
+                    // 获取midi文件并解析为JSON
 					this.getMidiJson().then((notes) => {
+                        // 播放notes
 						this.playCurrentNotesStep();
-						this.$refs.piano.$emit("startRain");
+						this.$refs.piano.$emit("startRain", notes);
 					});
+
+					// 结束加载动画
+					this.preloading = false;
 					return;
 					// 发送开始事件给服务器
 					this.ready

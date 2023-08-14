@@ -16,9 +16,6 @@ import * as Tone from "tone";
 import noteMapping from "@static/js/noteMapping";
 import MidiMixin from "@/mixins/midi";
 export default {
-	props: {
-		midiJson: null,
-	},
 	mixins: [MidiMixin],
 	data() {
 		return {
@@ -26,19 +23,20 @@ export default {
 			notes: [],
 			synth: new Tone.Synth().toDestination(),
 			audioContextStarted: false,
+			midiNotes: null,
 			midiName: "我爱你中国",
 		};
 	},
 	methods: {
-		async loadMidiJson() {
+		async loadMidiNotes() {
 			this.preloading = true;
-			const midiJson = await this.getMidiJson();
+			const midiNotes = await this.getMidiJson();
 			this.preloading = false;
 
-			return midiJson;
+			return midiNotes;
 		},
 		async createNote() {
-			this.midiJson.forEach((item, index) => {
+			this.midiNotes.forEach((item, index) => {
 				let duration = item.duration;
 				const note = {
 					id: index,
@@ -55,9 +53,9 @@ export default {
 			});
 		},
 		async startAudio() {
-			const midiJson = this.midiJson
-				? this.midiJson
-				: await loadMidiJson();
+			const midiNotes = this.midiNotes
+				? this.midiNotes
+				: await loadMidiNotes();
 
 			if (!this.audioContextStarted) {
 				Tone.start();
@@ -86,7 +84,8 @@ export default {
 		},
 	},
 	mounted() {
-		this.$on("startRain", () => {
+		this.$on("startRain", (midiNotes) => {
+			this.midiNotes = midiNotes;
 			this.startAudio();
 		});
 		this.$on("stopRain", () => {
