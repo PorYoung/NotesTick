@@ -8,7 +8,7 @@ export default {
 	data() {
 		return {
 			midiNotes: [],
-			vRatio: 0.5,
+			vRatio: 0.75,
 		};
 	},
 	methods: {
@@ -28,22 +28,22 @@ export default {
 
 			return notes;
 		},
-		playCurrentNotes() {
+		playCurrentNotes(notes, blankTime = 1000) {
 			const now = Tone.now() + 0.5;
-			this.midiNotes.forEach((note) => {
+			notes.forEach((note) => {
 				console.debug(
 					now,
 					note.name,
 					note.duration,
-					note.time + now,
+					note.time + now + blankTime / 1000,
 					note.velocity
 				);
 				try {
 					// 时间*vRatio 表示 1/vRatio倍速进行
 					this.instrument.triggerAttackRelease(
 						note.name,
-						note.duration / this.vRatio,
-						note.time / this.vRatio + now,
+						note.duration,
+						note.time + now + blankTime / 1000,
 						note.velocity
 					);
 				} catch (exp) {
@@ -51,28 +51,28 @@ export default {
 				}
 			});
 		},
-		playCurrentNotesStep() {
+		playCurrentNotesStep(notes, blankTime = 1000) {
 			const now = Tone.now() + 0.5;
-			this.midiNotes.forEach((note) => {
+			notes.forEach((note) => {
 				console.debug(
 					now,
 					note.name,
 					note.duration,
-					note.time + now,
+					blankTime / 1000 + note.time + now,
 					note.velocity
 				);
 				this.instrument.triggerAttack(
 					note.name,
-					note.time / this.vRatio + now,
+					blankTime / 1000 + note.time + now,
 					note.velocity
 				);
 				this.instrument.triggerRelease(
 					note.name,
-					(note.duration + note.time) / this.vRatio + now
+					blankTime / 1000 + note.duration + note.time + now
 				);
 			});
 		},
-		playCurrentNotesTimer() {
+		playCurrentNotesTimer(notes, blankTime = 1000) {
 			this.midiNotes.forEach((note) => {
 				setTimeout(() => {
 					this.instrument.triggerAttack(
@@ -80,20 +80,19 @@ export default {
 						"+0",
 						note.velocity
 					);
-				}, (note.time * 1000) / this.vRatio);
+				}, blankTime + note.time * 1000);
 				setTimeout(() => {
 					this.instrument.triggerRelease(
 						note.name,
-						((note.duration + note.time) * 1000) / this.vRatio
+						blankTime + (note.duration + note.time) * 1000
 					);
 				});
 			});
 		},
-		playCurrentNotesSingleTimer() {
+		playCurrentNotesSingleTimer(notes, blankTime = 1000) {
 			playStartTime = playStartTime ? playStartTime : +new Date();
 			let now = +new Date();
 			let progress = now - playStartTime;
-			let notes = this.midiNotes;
 			if (currentNoteIndex < notes.length) {
 				currentNote = notes[currentNoteIndex];
 				if (currentNote.time * 1000 <= progress) {

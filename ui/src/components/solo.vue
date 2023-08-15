@@ -54,6 +54,7 @@ export default {
 			allocEndPos: 0, // 音符资源中最后被分配的音符的位置
 			userNotesMap: {}, // 用户与分配的音符映射
 			/* 音符控制相关变量 */
+			blankTime: 1000,
 			keyboardList: ["a", "s", "d", "f", "j", "k", "l"],
 			keyNotesMap: { a: "C4", s: "D4", d: "E4", f: "F4" },
 			keyPressed: new Set(),
@@ -210,16 +211,25 @@ export default {
 					this.loadInstrument("Salamander piano", () => {
 						// 获取midi文件并解析为JSON
 						this.getMidiJson().then((notes) => {
-							// // 启动音乐雨
-							// this.$refs.piano.$emit("startRain", notes);
+							notes.forEach((note) => {
+								note.time /= this.vRatio;
+								note.duration /= this.vRatio;
+							});
+							// 启动音乐雨
+							this.$refs.piano.$emit(
+								"startRain",
+								notes,
+								this.blankTime
+							);
 							// setTimeout(() => {
-							// 	// 播放notes
-							// 	this.playCurrentNotesTimer();
+							// 播放notes
+							this.playCurrentNotesTimer(notes, this.blankTime);
 							// }, 2550);
 						});
-
 						// 结束加载动画
 						this.preloading = false;
+						return;
+
 						// 发送开始事件给服务器
 						this.socket.emit("CLI_READY", { name: this.name });
 					});
