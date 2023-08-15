@@ -1,13 +1,6 @@
 <template>
 	<div class="note-container" v-loading.fullscreen.lock="preloading">
-		<div
-			v-for="note in notes"
-			:key="note.id"
-			class="note"
-			:style="note.style"
-			@animationstart="showNote(note.id)"
-			@animationend="removeNote(note.id)"
-		></div>
+		<canvas ref="canvas" width="1200" height="400"></canvas>
 	</div>
 </template>
 
@@ -19,53 +12,113 @@ export default {
 	mixins: [MidiMixin],
 	data() {
 		return {
+			ctx: null,
+			animationId: null,
+			WIDTH: 0,
+			HEIGHT: 0,
+			blockWidth: 0,
+			blankTime: 1000,
+			firstNoteTime: 0,
+			moveVelocity: 0,
+			animationId: null,
 			preloading: false,
 			notes: [],
 			synth: new Tone.Synth().toDestination(),
 			audioContextStarted: false,
-			midiNotes: null,
+			// midiNotes: null,
 			midiName: "我爱你中国",
 		};
 	},
 	methods: {
 		async loadMidiNotes() {
 			this.preloading = true;
-			const midiNotes = await this.getMidiJson();
+			const notes = await this.getMidiJson();
 			this.preloading = false;
 
-			return midiNotes;
+			return notes;
 		},
 		async createNote() {
-			this.midiNotes.forEach((item, index) => {
-				let duration = item.duration;
-				const note = {
-					id: index,
-					style: {
-						height: `${duration * 100}px`,
-						left: `${6 + noteMapping[item.name]}%`,
-						animationDuration: `${item.velocity * 6}s`,
-						animationDelay: `${2 * item.time}s`,
-						background:
-							"linear-gradient(to right, rgb(198, 255, 221), rgb(251, 215, 134), rgb(247, 121, 125))",
-					},
-				};
-				this.notes.push(note);
-			});
+			this.WIDTH = this.ctx.width || 1200;
+			this.HEIGHT = this.ctx.height || 400;
+			this.blockWidth = this.WIDTH / noteMapping.length;
+			this.firstNoteTime = this.notes[0].time * 1000;
+			this.moveVelocity = this.HEIGHT / (this.blankTime + this.firstNoteTime);
+			this.animationId = requestAnimationFrame(() => {
+				const notesBlocks = this.createNotesBlock(this.notes);
+				this.draw(notesBlocks, +new Date());
+			})
 		},
-		showNote(id) {
-			const index = this.notes.findIndex((note) => note.id === id);
-			this.notes[index].style.opacity = 1;
-		},
-		removeNote(id) {
-			const index = this.notes.findIndex((note) => note.id === id);
-			if (index !== -1) {
-				this.notes.splice(index, 1);
-			}
-		},
+		createNotesBlock(notes){
+            const notesBlocks = [];
+            notes.forEach(note => {
+                const x = noteMapping.indexOf(note.name) * this.blockWidth;
+                const h = note.duration * 1000 * this.moveVelocity;
+                const w = this.blockWidth;
+                const y = - (note.time * 1000 - this.firstNoteTime) * this.moveVelocity - h;
+                const noteBlock = {
+                    name: note.name,
+                    x: x,
+                    y: y,
+                    height: h,
+                    width: w
+                }
+                notesBlocks.push(noteBlock);
+            });
+            return notesBlocks;
+        },
+		updateNotesBlock(notesBlocks, lastTime){
+            const now = +new Date();
+            const passed = now - lastTime;
+            notesBlocks.forEach(block => {
+                block.y += passed * this.moveVelocity;
+            });
+            const updatedBlocks = notesBlocks.filter(block => {
+                return block.y <= this.HEIGHT + block.height;
+            })
+
+            return { updatedBlocks, now };
+        },
+		draw(notesBlocks, lastTime){
+            // 清空画布
+            this.ctx.clearRect(0, 0, 800, 400);
+            // 绘制音符块
+            for (let i = 0; i < notesBlocks.length; i++) {
+                const block = notesBlocks[i];
+
+                // 绘制音符块
+				let gradient = this.ctx.createLinearGradient(block.x, block.y, block.width, block.height);
+				gradient.addColorStop(1, "rgb(198, 255, 221)");
+				gradient.addColorStop(1, "rgb(251, 215, 134)");
+				gradient.addColorStop(1, "rgb(247, 121, 125)");
+				let gradient2 = this.ctx.createLinearGradient(block.x, block.y, block.width, block.height);
+				gradient2.addColorStop(1, "rgb(101, 78, 163)");
+				gradient2.addColorStop(1, "rgb(234, 175, 200)");
+                this.ctx.fillStyle = block.highlighted ? gradient2 : gradient;
+                this.ctx.fillRect(block.x, block.y, block.width, block.height);
+
+                // 判断音符块是否触及底部白线
+                if (block.y + block.height >= this.HEIGHT) {
+                    // 判断是否需要触发音符块的发亮效果
+                    block.highlighted = true;
+
+                    // 判断是否需要结束动画
+                    if (block.noteIndex >= this.notes.length) {
+                        cancelAnimationFrame(this.animationId);
+                    }
+                }
+            }
+
+            this.animationId = requestAnimationFrame(() => {
+                const { updatedBlocks, now } = this.updateNotesBlock(notesBlocks, lastTime);
+                console.log(updatedBlocks,'updatedBlocks')
+				updatedBlocks.length > 0 ? this.draw(updatedBlocks, now) : cancelAnimationFrame(animationId);
+            });
+        }
 	},
 	mounted() {
-		this.$on("startRain", (midiNotes) => {
-			this.midiNotes = midiNotes;
+        this.ctx = this.$refs.canvas.getContext("2d");
+		this.$on("startRain", (notes) => {
+			this.notes = notes;
 			this.loadMidiNotes();
 			this.createNote();
 		});
