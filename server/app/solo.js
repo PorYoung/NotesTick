@@ -11,11 +11,12 @@ const DEFAULT_MIDI_NAME = "我爱你中国.mid";
 // 房间默认配置
 const DEFAULT_CONFIG = {
 	maxPeople: 20,
-	maxNotesMap: 7,
+	maxNotesMapNum: 7,
 	usersMap: {},
 	userIds: [],
 	readyIdsSet: new Set(),
 	userNotesMap: {},
+	allocStartPos: 0,
 	allocEndPos: 0,
 };
 // 用户对象模板
@@ -70,7 +71,7 @@ const createOrGetRoom = (room = ROOM_ID, midiName = DEFAULT_MIDI_NAME) => {
 // 用户准备就绪，为用户设置运行参数
 const updateUserRunEnv = (user, ready = true, room = ROOM_ID) => {
 	const roomConfig = createOrGetRoom(room);
-	const { notesResources, readyIdsSet, userNotesMap, maxNotesMap } =
+	const { notesResources, readyIdsSet, userNotesMap, maxNotesMapNum } =
 		roomConfig;
 
 	if (ready) {
@@ -83,27 +84,28 @@ const updateUserRunEnv = (user, ready = true, room = ROOM_ID) => {
 	const numReady = readyIdsSet.size;
 	const numResources = notesResources.length;
 
-	console.log(numReady, numResources);
 	// 计算每个用户应分配的资源数量
 	let resourcesPerUser = Math.floor(numResources / numReady);
 	resourcesPerUser =
-		resourcesPerUser > maxNotesMap ? maxNotesMap : resourcesPerUser;
-
-	// 平均分配资源给每个准备的用户
+		resourcesPerUser > maxNotesMapNum ? maxNotesMapNum : resourcesPerUser;
+	const allocStartPos = Math.floor(
+		(numResources - resourcesPerUser * numReady) / 2
+	);
+	// 分配资源给每个准备的用户
 	let endPos = 0;
 	let loopIdx = 0;
 	readyIdsSet.forEach((userId) => {
 		// 获取当前用户应分配的资源范围
 		let i = loopIdx;
-		const start = i * resourcesPerUser;
-		const end = (i + 1) * resourcesPerUser;
-
+		const start = allocStartPos + i * resourcesPerUser;
+		const end = allocStartPos + (i + 1) * resourcesPerUser;
 		// 将资源分配给当前用户
 		userNotesMap[userId] = notesResources.slice(start, end);
 		// 记录最后被分配的音符位置
 		endPos = end;
 		loopIdx += 1;
 	});
+	roomConfig.allocStartPos = allocStartPos;
 	roomConfig.allocEndPos = endPos;
 };
 // 移除无效用户
@@ -162,9 +164,8 @@ const onUserConnect = (io, socket) => {
  */
 const onUserReady = (io, socket, data) => {
 	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
-	const { usersMap, readyIdsSet, userNotesMap, allocEndPos } =
-		createOrGetRoom(room);
-	console.log(room, usersMap, readyIdsSet, userNotesMap, allocEndPos);
+	const roomConfig = createOrGetRoom(room);
+	const { usersMap, readyIdsSet, userNotesMap } = roomConfig;
 
 	const id = socket.id;
 	updateUserRunEnv(usersMap[id], true);
@@ -174,8 +175,17 @@ const onUserReady = (io, socket, data) => {
 		userId: id,
 		readyIds: [...readyIdsSet],
 		userNotesMap,
-		allocEndPos,
+		allocStartPos: roomConfig.allocStartPos,
+		allocEndPos: roomConfig.allocEndPos,
 	});
+	console.log(
+		room,
+		usersMap,
+		readyIdsSet,
+		userNotesMap,
+		roomConfig.allocStartPos,
+		roomConfig.allocEndPos
+	);
 };
 /**
  * 用户退出事件

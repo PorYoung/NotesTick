@@ -28,9 +28,11 @@ export default {
 
 			return notes;
 		},
-		playCurrentNotes(notes, blankTime = 1000) {
+		playCurrentNotes(notes, blankTime = 1000, skipNotes = []) {
 			const now = Tone.now() + 0.5;
 			notes.forEach((note) => {
+				if (note.name in skipNotes) return;
+
 				console.debug(
 					now,
 					note.name,
@@ -51,9 +53,11 @@ export default {
 				}
 			});
 		},
-		playCurrentNotesStep(notes, blankTime = 1000) {
+		playCurrentNotesStep(notes, blankTime = 1000, skipNotes = []) {
 			const now = Tone.now() + 0.5;
 			notes.forEach((note) => {
+				if (note.name in skipNotes) return;
+
 				console.debug(
 					now,
 					note.name,
@@ -72,8 +76,10 @@ export default {
 				);
 			});
 		},
-		playCurrentNotesTimer(notes, blankTime = 1000) {
+		playCurrentNotesTimer(notes, blankTime = 1000, skipNotes = []) {
 			this.midiNotes.forEach((note) => {
+				if (skipNotes.includes(note.name)) return;
+
 				setTimeout(() => {
 					this.instrument.triggerAttack(
 						note.name,
@@ -89,13 +95,16 @@ export default {
 				});
 			});
 		},
-		playCurrentNotesSingleTimer(notes, blankTime = 1000) {
+		playCurrentNotesSingleTimer(notes, blankTime = 1000, skipNotes = []) {
 			playStartTime = playStartTime ? playStartTime : +new Date();
 			let now = +new Date();
 			let progress = now - playStartTime;
 			if (currentNoteIndex < notes.length) {
 				currentNote = notes[currentNoteIndex];
-				if (currentNote.time * 1000 <= progress) {
+				if (
+					currentNote.time * 1000 <= progress &&
+					!(currentNote.note in skipNotes)
+				) {
 					this.instrument.triggerAttackRelease(
 						currentNote.name,
 						currentNote.duration,

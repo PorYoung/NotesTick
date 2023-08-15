@@ -14,11 +14,29 @@
 			<piano ref="piano" />
 		</el-main>
 		<el-footer>
-			<button id="start" @click="toReady">
-				{{ readyText }} {{ _len(readyIds) }} /
-				{{ _len(usersMap) }} 玩家已准备 &nbsp;[网络延迟:
-				{{ latency }} ms]
-			</button>
+			<el-row :gutter="2">
+				<el-col :span="6">
+					<button
+						class="btn"
+						@click="toReady"
+						:disable="this.started"
+					>
+						{{ readyText }} {{ _len(readyIds) }} /
+						{{ _len(usersMap) }} 玩家已准备
+					</button>
+				</el-col>
+				<el-col :span="6">
+					<button
+						class="btn"
+						:disabled="this.started || !this.ready"
+						@click="toStart"
+					>
+						开始游戏
+					</button>
+				</el-col>
+				<el-col :span="6"> 网络延迟:{{ latency }} ms </el-col>
+			</el-row>
+
 			<div id="usersMap" ref="usersMap" v-for="item in usersMap">
 				<div class="player">
 					<img src="@static/images/avatar.jpg" />
@@ -51,12 +69,23 @@ export default {
 			/* 音符资源 */
 			notesResources: [], // 乐曲涉及的全部音符
 			notesRestList: [], // 乐曲中不参与分配的音符
+			allocStartPos: 0, // 音符资源中起始被分配的音符的位置
 			allocEndPos: 0, // 音符资源中最后被分配的音符的位置
 			userNotesMap: {}, // 用户与分配的音符映射
 			/* 音符控制相关变量 */
+			started: false,
+			toStartTime: 3000, // 正式启动倒计时ms
 			blankTime: 1000,
 			keyboardList: ["a", "s", "d", "f", "j", "k", "l"],
-			keyNotesMap: { a: "C4", s: "D4", d: "E4", f: "F4" },
+			keyNotesMap: {
+				a: "C4",
+				s: "D4",
+				d: "E4",
+				f: "F4",
+				j: "G4",
+				k: "A4",
+				l: "B4",
+			},
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
@@ -116,7 +145,9 @@ export default {
 			this.socket.on("USERS_UPDATE", this.onUpdatePlayers);
 
 			// 监听用户准备列表更新事件
-			this.socket.on("READY_UPDATE", this.onReadyUpdate);
+			this.socket.on("READY_UPDATE", this.onReadyEvent);
+
+			this.socket.on("GAME_START", this.onStartEvent);
 
 			// 网络延迟检测
 			const pingTimer = () => {
@@ -149,11 +180,13 @@ export default {
 			this.notesResources = data.notesResources;
 			this.notesRestList = data.notesRestList;
 		},
-		onReadyUpdate(data) {
+		onReadyEvent(data) {
 			// data: 返回 {userId, readyIds, userNotesMap, allocEndPos}
 			this.readyIds = data.readyIds;
 			this.userNotesMap = data.userNotesMap;
+			this.allocStartPos = data.allocStartPos;
 			this.allocEndPos = data.allocEndPos;
+			console.log(data);
 
 			console.log(data);
 
@@ -197,6 +230,33 @@ export default {
 			// 闪烁头像
 			this.blinkAvatar(data.id);
 		},
+		onStartEvent(data) {
+			this.preloading = false;
+			this.started = true;
+			const notes = this.midiNotes;
+			const _toStartTime = this.toStartTime;
+			const countFun = () => {
+				this.$message.success(`倒计时 ${this.toStartTime / 1000}`);
+				this.toStartTime -= 1000;
+				if (this.toStartTime > 0) {
+					setTimeout(countFun, 1000);
+				} else {
+					this.toStartTime = _toStartTime;
+					// 启动音乐雨
+					this.$refs.piano.$emit("startRain", notes, this.blankTime);
+					// 播放notes
+					this.playCurrentNotesTimer(
+						notes,
+						this.blankTime,
+						this.notesResources.slice(
+							this.allocStartPos,
+							this.allocEndPos > 0 ? this.allocEndPos + 1 : 0
+						)
+					);
+				}
+			};
+			countFun();
+		},
 		/**
 		 * 用户准备
 		 */
@@ -215,23 +275,13 @@ export default {
 								note.time /= this.vRatio;
 								note.duration /= this.vRatio;
 							});
-							// 启动音乐雨
-							this.$refs.piano.$emit(
-								"startRain",
-								notes,
-								this.blankTime
-							);
-							// setTimeout(() => {
-							// 播放notes
-							this.playCurrentNotesTimer(notes, this.blankTime);
-							// }, 2550);
-						});
-						// 结束加载动画
-						this.preloading = false;
-						return;
+							this.midiNotes = notes;
 
-						// 发送开始事件给服务器
-						this.socket.emit("CLI_READY", { name: this.name });
+							// 发送准备事件给服务器
+							this.socket.emit("CLI_READY", { name: this.name });
+							// // 结束加载动画
+							this.preloading = false;
+						});
 					});
 				} else {
 					// 结束加载动画
@@ -243,6 +293,16 @@ export default {
 			if (!this.ready) {
 				this.socket.emit("CLI_CANCEL_READY", { name: this.name });
 			}
+		},
+		/**
+		 * 开始游戏
+		 */
+		toStart() {
+			if (!this.ready) return;
+			if (this.started) return;
+
+			this.preloading = true;
+			this.socket.emit("GAME_START", { tickTime: +new Date() });
 		},
 		// 监听键盘事件
 		addKeyDownListener() {

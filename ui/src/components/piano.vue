@@ -124,7 +124,10 @@ export default {
 					-Math.PI / 2,
 					0
 				);
-				this.ctx.lineTo(block.x + block.width, block.y + block.height - cornerRadius);
+				this.ctx.lineTo(
+					block.x + block.width,
+					block.y + block.height - cornerRadius
+				);
 				this.ctx.arc(
 					block.x + block.width - cornerRadius,
 					block.y + block.height - cornerRadius,
@@ -164,7 +167,6 @@ export default {
 					notesBlocks,
 					lastTime
 				);
-				console.log(updatedBlocks, "updatedBlocks");
 				updatedBlocks.length > 0
 					? this.draw(updatedBlocks, now)
 					: cancelAnimationFrame(animationId);
