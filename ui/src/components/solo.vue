@@ -317,6 +317,7 @@ export default {
 
 			if (e.key in this.keyNotesMap && !this.keyPressed.has(e.key)) {
 				const note = this.keyNotesMap[e.key];
+				this.$refs.piano.$emit("handleKeyDown", note);
 				this.keyPressed.add(e.key);
 				this.instrument.triggerAttack(note);
 
@@ -334,6 +335,7 @@ export default {
 
 			if (e.key in this.keyNotesMap && this.keyPressed.has(e.key)) {
 				const note = this.keyNotesMap[e.key];
+				this.$refs.piano.$emit("handleKeyUp", note);
 				this.keyPressed.delete(e.key);
 				this.instrument.triggerRelease(this.keyNotesMap[e.key]);
 

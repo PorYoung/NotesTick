@@ -1,17 +1,28 @@
 <template>
 	<div class="note-container" v-loading.fullscreen.lock="preloading">
-		<canvas ref="canvas" width="1200" height="400"></canvas>
+		<canvas ref="canvas" width="1200" height="400" class="canvas"></canvas>
+		<div class="line"> 
+			<div
+				v-for="note in buttonsArr"
+				:key="note"
+				:style="{ width: blockWidth+'px'}"
+				class="key"
+				:class="{ active: activeNotes.includes(note) }"
+				>
+				{{ note }}
+			</div>
+		</div>
 	</div>
 </template>
 
 <script>
 import * as Tone from "tone";
-import noteMapping from "@static/js/noteMapping";
 import MidiMixin from "@/mixins/midi";
 export default {
 	mixins: [MidiMixin],
 	data() {
 		return {
+			buttonsArr: [],
 			ctx: null,
 			animationId: null,
 			WIDTH: 0,
@@ -28,6 +39,7 @@ export default {
 			audioContextStarted: false,
 			// midiNotes: null,
 			midiName: "我爱你中国",
+			activeNotes: [], // 记录当前按下的音符
 		};
 	},
 	methods: {
@@ -41,7 +53,7 @@ export default {
 		createNote() {
 			this.WIDTH = this.ctx.width || 1200;
 			this.HEIGHT = this.ctx.height || 400;
-			this.blockWidth = this.WIDTH / noteMapping.length;
+			this.blockWidth = this.WIDTH / this.buttonsArr.length;
 			this.firstNoteTime = this.notes[0].time * 1000;
 			this.moveVelocity =
 				this.HEIGHT / (this.blankTime + this.firstNoteTime);
@@ -54,7 +66,7 @@ export default {
 			const notesBlocks = [];
 			notes.forEach((note) => {
 				const x =
-					noteMapping.indexOf(note.name) * this.blockWidth +
+					this.buttonsArr.indexOf(note.name) * this.blockWidth +
 					this.blockGap;
 				const h = note.duration * 1000 * this.moveVelocity;
 				const w = this.blockWidth - this.blockGap * 2;
@@ -113,7 +125,7 @@ export default {
 				this.ctx.fillStyle = block.highlighted ? gradient2 : gradient;
 
 				// 绘制圆角矩形
-				const cornerRadius = 5; // 圆角半径
+				const cornerRadius = 3; // 圆角半径
 				this.ctx.beginPath();
 				this.ctx.moveTo(block.x + cornerRadius, block.y);
 				this.ctx.lineTo(block.x + block.width - cornerRadius, block.y);
@@ -171,12 +183,13 @@ export default {
 					? this.draw(updatedBlocks, now)
 					: cancelAnimationFrame(animationId);
 			});
-		},
+		}
 	},
 	mounted() {
 		this.ctx = this.$refs.canvas.getContext("2d");
 		this.$on("startRain", (notes) => {
 			this.notes = notes;
+			this.buttonsArr = [...new Set(this.notes.map(item => item.name))]
 			// this.loadMidiNotes();
 			this.createNote();
 		});
@@ -184,6 +197,19 @@ export default {
 			this.notes = [];
 			Tone.Transport.stop();
 		});
+		//按下按钮触发事件
+		this.$on('handleKeyDown', (note) =>{
+			if (note && !this.activeNotes.includes(note)) {
+				this.activeNotes.push(note);
+			}
+		});
+		//松开按钮触发事件
+		this.$on('handleKeyUp', (note) => {
+			if (note && this.activeNotes.includes(note)) {
+				const index = this.activeNotes.indexOf(note);
+				this.activeNotes.splice(index, 1);
+			}
+		})
 	},
 };
 </script>
@@ -196,14 +222,30 @@ export default {
 	margin-left: 6%;
 	overflow: hidden;
 
-	&::after {
-		content: " ";
+	.canvas {
+		position: absolute;
+		left: 6%;
+	}
+	.line {
 		position: absolute;
 		left: 0;
 		bottom: 0;
+		width: 1200px;
 		height: 16px;
-		width: 100%;
-		background-color: white;
+		.key {
+			display: inline-block;
+			height: 16px;
+			font-size: 6px;
+			color: #000;
+			border: 1px solid #000;
+			background-color: #fff;
+			text-align: center;
+		}
+
+		.active {
+			background-color: #bf15ee;
+			box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
+		}
 	}
 }
 
