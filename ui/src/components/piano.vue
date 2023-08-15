@@ -38,7 +38,7 @@ export default {
 
 			return notes;
 		},
-		async createNote() {
+		createNote() {
 			this.WIDTH = this.ctx.width || 1200;
 			this.HEIGHT = this.ctx.height || 400;
 			this.blockWidth = this.WIDTH / noteMapping.length;
@@ -99,8 +99,8 @@ export default {
 					block.width,
 					block.height
 				);
-				gradient.addColorStop(1, "rgb(198, 255, 221)");
-				gradient.addColorStop(1, "rgb(251, 215, 134)");
+				gradient.addColorStop(0, "rgb(198, 255, 221)");
+				gradient.addColorStop(0.5, "rgb(251, 215, 134)");
 				gradient.addColorStop(1, "rgb(247, 121, 125)");
 				let gradient2 = this.ctx.createLinearGradient(
 					block.x,
@@ -108,10 +108,49 @@ export default {
 					block.width,
 					block.height
 				);
-				gradient2.addColorStop(1, "rgb(101, 78, 163)");
-				gradient2.addColorStop(1, "rgb(234, 175, 200)");
+				gradient2.addColorStop(0, "rgb(211, 204, 227)");
+				gradient2.addColorStop(1, "rgb(233, 228, 240)");
 				this.ctx.fillStyle = block.highlighted ? gradient2 : gradient;
-				this.ctx.fillRect(block.x, block.y, block.width, block.height);
+
+				// 绘制圆角矩形
+				const cornerRadius = 5; // 圆角半径
+				this.ctx.beginPath();
+				this.ctx.moveTo(block.x + cornerRadius, block.y);
+				this.ctx.lineTo(block.x + block.width - cornerRadius, block.y);
+				this.ctx.arc(
+					block.x + block.width - cornerRadius,
+					block.y + cornerRadius,
+					cornerRadius,
+					-Math.PI / 2,
+					0
+				);
+				this.ctx.lineTo(block.x + block.width, block.y + block.height - cornerRadius);
+				this.ctx.arc(
+					block.x + block.width - cornerRadius,
+					block.y + block.height - cornerRadius,
+					cornerRadius,
+					0,
+					Math.PI / 2
+				);
+				this.ctx.lineTo(block.x + cornerRadius, block.y + block.height);
+				this.ctx.arc(
+					block.x + cornerRadius,
+					block.y + block.height - cornerRadius,
+					cornerRadius,
+					Math.PI / 2,
+					Math.PI
+				);
+				this.ctx.lineTo(block.x, block.y + cornerRadius);
+				this.ctx.arc(
+					block.x + cornerRadius,
+					block.y + cornerRadius,
+					cornerRadius,
+					Math.PI,
+					-Math.PI / 2
+				);
+				this.ctx.closePath();
+
+				this.ctx.fill();
 
 				// 判断音符块是否触及底部白线
 				if (block.y + block.height >= this.HEIGHT) {
