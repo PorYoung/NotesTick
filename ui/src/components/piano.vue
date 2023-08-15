@@ -52,26 +52,6 @@ export default {
 				this.notes.push(note);
 			});
 		},
-		async startAudio() {
-			const midiNotes = this.midiNotes
-				? this.midiNotes
-				: await loadMidiNotes();
-
-			if (!this.audioContextStarted) {
-				Tone.start();
-				this.audioContextStarted = true;
-			}
-
-			// 开始创建音符
-			const bpm = 120;
-			const interval = 60000 / bpm;
-
-			Tone.Transport.scheduleRepeat(() => {
-				this.createNote();
-			}, interval);
-
-			Tone.Transport.start();
-		},
 		showNote(id) {
 			const index = this.notes.findIndex((note) => note.id === id);
 			this.notes[index].style.opacity = 1;
@@ -86,7 +66,8 @@ export default {
 	mounted() {
 		this.$on("startRain", (midiNotes) => {
 			this.midiNotes = midiNotes;
-			this.startAudio();
+			this.loadMidiNotes();
+			this.createNote();
 		});
 		this.$on("stopRain", () => {
 			this.notes = [];
