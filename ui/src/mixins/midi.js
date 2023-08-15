@@ -112,7 +112,7 @@ export default {
 					);
 					currentNoteIndex++;
 				}
-				setTimeout(this.playCurrentNote, 10);
+				setTimeout(this.playCurrentNotesSingleTimer, 10);
 			} else {
 				// 音乐播放完毕
 				console.log("音乐播放完毕");
