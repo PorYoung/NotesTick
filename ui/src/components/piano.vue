@@ -224,7 +224,7 @@ export default {
 
 	.canvas {
 		position: absolute;
-		left: 6%;
+		left: 0%;
 	}
 	.line {
 		position: absolute;
@@ -246,24 +246,6 @@ export default {
 			background-color: #bf15ee;
 			box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
 		}
-	}
-}
-
-.note {
-	position: absolute;
-	width: 1%;
-	opacity: 0; /* 初始时设置音符不可见 */
-	animation: fallAnimation linear;
-}
-
-@keyframes fallAnimation {
-	0% {
-		transform: translateY(-100%);
-		opacity: 1;
-	}
-	100% {
-		transform: translateY(100vh);
-		opacity: 1;
 	}
 }
 </style>
