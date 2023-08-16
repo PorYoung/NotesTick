@@ -38,7 +38,7 @@ app.use(express.static("public"));
 
 // 连接前检查
 io.use((socket, next) => {
-	solo.preChecker(socket, next);
+	solo.preInterceptor(socket, next);
 });
 
 // 客户端连接事件

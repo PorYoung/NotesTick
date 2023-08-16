@@ -13,8 +13,8 @@ export default {
 	},
 	methods: {
 		/*  */
-		async getMidiJson(midiName = "我爱你中国") {
-			const midiUrl = `/static/midi/${midiName}.mid`;
+		async getMidiJson(midiName = "我爱你中国.mid") {
+			const midiUrl = `/static/midi/${midiName}`;
 			const midi = await Midi.fromUrl(midiUrl);
 			//the file name decoded from the first track
 			const name = midi.name;

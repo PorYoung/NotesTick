@@ -18,31 +18,44 @@
 				<el-col :span="6">
 					<button
 						class="btn"
+						:disabled="this.started"
 						@click="toReady"
-						:disable="this.started"
 					>
-						{{ readyText }} {{ _len(readyIds) }} /
-						{{ _len(usersMap) }} 玩家已准备
+						{{ this.started ? "游戏已开始" : readyText }}
+						{{ _len(readyIds) }} / {{ _len(usersMap) }} 玩家已准备
 					</button>
 				</el-col>
 				<el-col :span="6">
 					<button
 						class="btn"
-						:disabled="this.started || !this.ready"
+						:disabled="
+							this.started ||
+							!this.ready ||
+							this.userId !== this.roomCreator
+						"
 						@click="toStart"
 					>
-						开始游戏
+						{{
+							this.userId === this.roomCreator
+								? "开始游戏"
+								: "等待游戏开始"
+						}}
 					</button>
 				</el-col>
 				<el-col :span="6"> 网络延迟:{{ latency }} ms </el-col>
 			</el-row>
 
-			<div id="usersMap" ref="usersMap" v-for="item in usersMap">
-				<div class="player">
+			<el-row ref="usersMap" :gutter="1" type="flex">
+				<el-col
+					:span="3"
+					:key="item.id"
+					v-for="item in usersMap"
+					class="player"
+				>
 					<img src="@static/images/avatar.jpg" />
 					<span>{{ item.name }}</span>
-				</div>
-			</div>
+				</el-col>
+			</el-row>
 		</el-footer>
 	</el-container>
 </template>
@@ -62,17 +75,19 @@ export default {
 			/* 页面参数 */
 			preloading: true,
 			/* 加载 MIDI 文件 */
-			midiUrl: "",
+			midiName: "我爱你中国.mid",
 			/* Socket 相关变量 */
 			socket: null,
 			latency: 0,
+			roomCreator: "",
 			/* 音符资源 */
 			notesResources: [], // 乐曲涉及的全部音符
-			notesRestList: [], // 乐曲中不参与分配的音符
 			allocStartPos: 0, // 音符资源中起始被分配的音符的位置
 			allocEndPos: 0, // 音符资源中最后被分配的音符的位置
 			userNotesMap: {}, // 用户与分配的音符映射
 			/* 音符控制相关变量 */
+			allAuto: false,
+			loadedServerResources: false,
 			started: false,
 			toStartTime: 3000, // 正式启动倒计时ms
 			blankTime: 1000,
@@ -89,7 +104,7 @@ export default {
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
-			readyText: "准备",
+			readyText: "您尚未准备",
 			startTime: "",
 			/* 用户相关变量 */
 			userId: "",
@@ -98,20 +113,25 @@ export default {
 				name: "",
 			},
 			readyIds: [],
-			myNote: null,
 			/* 音符雨 */
 		};
 	},
 	mounted() {
 		const name = prompt("请输入您的名字");
 		this.preloading = false;
-		if (name) {
-			this.createSocket(name);
+		if (name.trim() != "") {
+			const { midi, velocity, auto } = this.$route.query;
+			this.midiName = midi || this.midiName;
+			this.vRatio = velocity || this.vRatio;
+			this.allAuto = auto || this.allAuto;
+			return this.createSocket(name.trim());
 		}
+		this.exitOnError("无效输入.");
 	},
 	methods: {
 		/* Socket 相关方法 */
 		createSocket(name) {
+			this.preloading = true;
 			// 连接WebSocket服务器
 			this.socket = io({
 				reconnectionDelayMax: 10000,
@@ -119,6 +139,9 @@ export default {
 					name,
 					mode: "solo",
 					room: "cgb",
+					midiName: this.midiName,
+					vRatio: this.vRatio,
+					allAuto: this.allAuto,
 				},
 			});
 			this.name = name;
@@ -127,6 +150,7 @@ export default {
 			this.socket.on("connect_error", this.onError);
 			this.socket.on("error", this.onError);
 			this.socket.on("disconnect", this.onDisConnect);
+			this.socket.on("SERVER_TO_DISCONNECT", this.onServerToDisConnect);
 
 			// 监听键盘事件
 			this.addKeyDownListener();
@@ -161,7 +185,6 @@ export default {
 		},
 		onConnect() {
 			console.log("Connected to server");
-			this.userId = this.socket.id;
 		},
 		onError(err) {
 			console.error(err);
@@ -170,15 +193,32 @@ export default {
 		},
 		onDisConnect(reason) {
 			console.error(reason);
+			this.exitOnError(`连接已断开，断开原因: ${reason}`);
+		},
+		onServerToDisConnect(data) {
+			this.exitOnError(data.errMsg);
 		},
 		onUpdatePlayers(data) {
 			console.log(data);
 			this.updatePlayersList(data.usersMap);
 		},
 		onResources(data) {
-			// 返回{ notesResources, notesRestList }
+			// 返回房间配置参数 如{ notesResources, readyIds }
+			if (!data || !data.notesResources || !data.readyIds) {
+				this.exitOnError("服务端返回资源异常!");
+			}
+			this.loadedServerResources = true;
+			const type = data.type ? data.type : "NEW";
+			if (type === "NEW") {
+				this.userId = data.userId;
+			}
 			this.notesResources = data.notesResources;
-			this.notesRestList = data.notesRestList;
+			this.readyIds = data.readyIds;
+			this.roomCreator = data.creator;
+			this.midiName = data.midiName;
+			this.vRatio = data.vRatio;
+
+			this.preloading = false;
 		},
 		onReadyEvent(data) {
 			// data: 返回 {userId, readyIds, userNotesMap, allocEndPos}
@@ -207,7 +247,7 @@ export default {
 			//     time /* 音符的规定触发时间 */,
 			//     duration /* 音符的规定持续时间 */,
 			// }
-			if (data.userId === this.socket.id) return;
+			if (data.userId === this.userId) return;
 
 			// 播放音符声音
 			this.playSound(data.note);
@@ -222,7 +262,7 @@ export default {
 			//     time /* 音符的规定触发时间 */,
 			//     duration /* 音符的规定持续时间 */,
 			// }
-			if (data.userId === this.socket.id) return;
+			if (data.userId === this.userId) return;
 
 			// 播放音符声音
 			this.stopSound(data.note);
@@ -266,8 +306,13 @@ export default {
 		 * 用户准备
 		 */
 		toReady() {
+			if (this.started) return;
+			if (!this.ready && !this.loadedServerResources) {
+				this.$message.error("服务器资源未正确加载.");
+				return;
+			}
 			this.ready = !this.ready;
-			this.readyText = this.ready ? "取消准备" : "准备";
+			this.readyText = this.ready ? "取消准备" : "您尚未准备";
 			if (this.ready) {
 				// 显示加载动画
 				this.preloading = true;
@@ -275,7 +320,7 @@ export default {
 				if (!this.instrument) {
 					this.loadInstrument("Salamander piano", () => {
 						// 获取midi文件并解析为JSON
-						this.getMidiJson().then((notes) => {
+						this.getMidiJson(this.midiName).then((notes) => {
 							notes.forEach((note) => {
 								note.time /= this.vRatio;
 								note.duration /= this.vRatio;
@@ -317,7 +362,7 @@ export default {
 			window.addEventListener("keyup", this.onKeyUp);
 		},
 		onKeyDown(e) {
-			e.preventDefault();
+			e.key != "F11" && e.preventDefault();
 			if (!this.ready || !this.instrument) return;
 
 			if (e.key in this.keyNotesMap && !this.keyPressed.has(e.key)) {
@@ -327,6 +372,7 @@ export default {
 				this.instrument.triggerAttack(note);
 
 				this.socket.emit("CLI_BROADCAST_NOTE", {
+					userId: this.userId,
 					note,
 					tickTime: +new Date() - this.startTime,
 				});
@@ -345,6 +391,7 @@ export default {
 				this.instrument.triggerRelease(this.keyNotesMap[e.key]);
 
 				this.socket.emit("CLI_RELEASE_NOTE", {
+					userId: this.userId,
 					note,
 					releaseTime: +new Date() - this.startTime,
 				});
@@ -368,6 +415,14 @@ export default {
 		// 更新用户列表的函数
 		updatePlayersList(data) {
 			this.usersMap = data;
+		},
+		exitOnError(err) {
+			this.$message.error(`${err} 【即将返回首页!】`);
+			this.$refs.piano.$emit("stopRain");
+			this.instrument && this.instrument.releaseAll();
+			setTimeout(() => {
+				this.$router.replace("/home");
+			}, 1500);
 		},
 	},
 };

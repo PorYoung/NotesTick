@@ -5,7 +5,7 @@
 			<div
 				v-for="note in notesResources"
 				:key="note"
-				:style="{ width: blockWidth + 'px' }"
+				:style="{ width: blockWidth - blockGap + 'px' }"
 				class="key"
 				:class="{ active: activeNotes.includes(note) }"
 			>
