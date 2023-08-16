@@ -243,7 +243,12 @@ export default {
 				} else {
 					this.toStartTime = _toStartTime;
 					// 启动音乐雨
-					this.$refs.piano.$emit("startRain", notes, this.blankTime);
+					this.$refs.piano.$emit(
+						"startRain",
+						notes,
+						this.blankTime,
+						this.notesResources
+					);
 					// 播放notes
 					this.playCurrentNotesTimer(
 						notes,

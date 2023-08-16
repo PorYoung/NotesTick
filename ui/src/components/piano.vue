@@ -1,14 +1,14 @@
 <template>
 	<div class="note-container" v-loading.fullscreen.lock="preloading">
 		<canvas ref="canvas" width="1200" height="400" class="canvas"></canvas>
-		<div class="line"> 
+		<div class="line">
 			<div
-				v-for="note in buttonsArr"
+				v-for="note in notesResources"
 				:key="note"
-				:style="{ width: blockWidth+'px'}"
+				:style="{ width: blockWidth + 'px' }"
 				class="key"
 				:class="{ active: activeNotes.includes(note) }"
-				>
+			>
 				{{ note }}
 			</div>
 		</div>
@@ -22,7 +22,7 @@ export default {
 	mixins: [MidiMixin],
 	data() {
 		return {
-			buttonsArr: [],
+			notesResources: [],
 			ctx: null,
 			animationId: null,
 			WIDTH: 0,
@@ -53,7 +53,7 @@ export default {
 		createNote() {
 			this.WIDTH = this.ctx.width || 1200;
 			this.HEIGHT = this.ctx.height || 400;
-			this.blockWidth = this.WIDTH / this.buttonsArr.length;
+			this.blockWidth = this.WIDTH / this.notesResources.length;
 			this.firstNoteTime = this.notes[0].time * 1000;
 			this.moveVelocity =
 				this.HEIGHT / (this.blankTime + this.firstNoteTime);
@@ -66,7 +66,7 @@ export default {
 			const notesBlocks = [];
 			notes.forEach((note) => {
 				const x =
-					this.buttonsArr.indexOf(note.name) * this.blockWidth +
+					this.notesResources.indexOf(note.name) * this.blockWidth +
 					this.blockGap;
 				const h = note.duration * 1000 * this.moveVelocity;
 				const w = this.blockWidth - this.blockGap * 2;
@@ -183,13 +183,14 @@ export default {
 					? this.draw(updatedBlocks, now)
 					: cancelAnimationFrame(animationId);
 			});
-		}
+		},
 	},
 	mounted() {
 		this.ctx = this.$refs.canvas.getContext("2d");
-		this.$on("startRain", (notes) => {
+		this.$on("startRain", (notes, blankTime, notesResources) => {
 			this.notes = notes;
-			this.buttonsArr = [...new Set(this.notes.map(item => item.name))]
+			this.blankTime = blankTime;
+			this.notesResources = notesResources;
 			// this.loadMidiNotes();
 			this.createNote();
 		});
@@ -198,18 +199,18 @@ export default {
 			Tone.Transport.stop();
 		});
 		//按下按钮触发事件
-		this.$on('handleKeyDown', (note) =>{
+		this.$on("handleKeyDown", (note) => {
 			if (note && !this.activeNotes.includes(note)) {
 				this.activeNotes.push(note);
 			}
 		});
 		//松开按钮触发事件
-		this.$on('handleKeyUp', (note) => {
+		this.$on("handleKeyUp", (note) => {
 			if (note && this.activeNotes.includes(note)) {
 				const index = this.activeNotes.indexOf(note);
 				this.activeNotes.splice(index, 1);
 			}
-		})
+		});
 	},
 };
 </script>
