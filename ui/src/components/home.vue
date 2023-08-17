@@ -7,6 +7,9 @@
 		<h2>
 			<router-link to="/battle">Battle</router-link>
 		</h2>
+		<h2>
+			<router-link to="/fullScreen">fullScreen</router-link>
+		</h2>
 	</div>
 </template>
 
