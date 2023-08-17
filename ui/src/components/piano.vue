@@ -1,13 +1,19 @@
 <template>
 	<div class="note-container" v-loading.fullscreen.lock="preloading">
-		<canvas ref="canvas" width="1200" height="400" class="canvas"></canvas>
+		<canvas ref="canvas" class="canvas"></canvas>
 		<div class="line">
 			<div
 				v-for="note in notesResources"
 				:key="note"
-				:style="{ width: blockWidth - blockGap + 'px' }"
+				:style="{
+					width: blockWidth + 'px',
+					padding: `0 ${blockGap}px;`,
+				}"
 				class="key"
-				:class="{ active: activeNotes.includes(note) }"
+				:class="{
+					active: activeNotes.includes(note),
+					'bind-key': bindNotes.includes(note),
+				}"
 			>
 				{{ note }}
 			</div>
@@ -20,6 +26,14 @@ import * as Tone from "tone";
 import MidiMixin from "@/mixins/midi";
 export default {
 	mixins: [MidiMixin],
+	computed: {
+		canvasWidth() {
+			return this.$refs.canvas.parentNode.clientWidth * 0.98;
+		},
+		canvasHeight() {
+			return this.$refs.canvas.parentNode.clientHeight * 0.98 - 24;
+		},
+	},
 	data() {
 		return {
 			notesResources: [],
@@ -39,7 +53,8 @@ export default {
 			audioContextStarted: false,
 			// midiNotes: null,
 			midiName: "我爱你中国",
-			activeNotes: [], // 记录当前按下的音符
+			activeNotes: [], // 记录当前按下的音符,
+			bindNotes: [],
 		};
 	},
 	methods: {
@@ -51,8 +66,8 @@ export default {
 			return notes;
 		},
 		createNote() {
-			this.WIDTH = this.ctx.width || 1200;
-			this.HEIGHT = this.ctx.height || 400;
+			this.WIDTH = this.canvasWidth || 1200;
+			this.HEIGHT = this.canvasHeight || 400;
 			this.blockWidth = this.WIDTH / this.notesResources.length;
 			this.firstNoteTime = this.notes[0].time * 1000;
 			this.moveVelocity =
@@ -186,11 +201,17 @@ export default {
 		},
 	},
 	mounted() {
-		this.ctx = this.$refs.canvas.getContext("2d");
-		this.$on("startRain", (notes, blankTime, notesResources) => {
+		const canvas = this.$refs.canvas;
+		this.ctx = canvas.getContext("2d");
+		// 设置canvas的宽度和高度
+		canvas.width = this.canvasWidth;
+		canvas.height = this.canvasHeight;
+
+		this.$on("startRain", (notes, blankTime, notesResources, bindNotes) => {
 			this.notes = notes;
 			this.blankTime = blankTime;
 			this.notesResources = notesResources;
+			this.bindNotes = bindNotes;
 			// this.loadMidiNotes();
 			this.createNote();
 		});
@@ -220,27 +241,34 @@ export default {
 	position: relative;
 	width: 88%;
 	height: 100%;
-	margin-left: 6%;
-	overflow: hidden;
+	max-height: 70vh;
+	margin: 0 auto;
+	padding-bottom: 24px;
+	box-sizing: border-box;
 
 	.canvas {
-		position: absolute;
-		left: 0%;
+		border: 1px solid #bf15ee;
+		border-radius: 8px;
 	}
 	.line {
-		position: absolute;
-		left: 0;
-		bottom: 0;
-		width: 1200px;
-		height: 16px;
+		width: 98%;
+		height: 24px;
+		line-height: 24px;
+		margin: 0 auto;
 		.key {
 			display: inline-block;
-			height: 16px;
+			height: 24px;
 			font-size: 6px;
 			color: #000;
 			border: 1px solid #000;
 			background-color: #fff;
 			text-align: center;
+			box-sizing: border-box;
+		}
+
+		.bind-key {
+			background-color: antiquewhite;
+			box-shadow: 0 0 10px rgba(255, 102, 102, 0.8);
 		}
 
 		.active {

@@ -57,6 +57,26 @@
 				</el-col>
 			</el-row>
 		</el-footer>
+		<!-- 全屏对话框 -->
+		<el-dialog
+			title="提示"
+			:visible.sync="dialogVisible"
+			:close-on-click-modal="false"
+			:close-on-press-escape="false"
+			:show-close="false"
+			:center="true"
+			width="30%"
+			:before-close="handleClose"
+		>
+			<el-input placeholder="如：admin" v-model="name">
+				<template slot="prepend">请输入您的名字</template>
+			</el-input>
+			<span slot="footer" class="dialog-footer">
+				<el-button type="primary" @click="confirmInputName"
+					>确 定</el-button
+				>
+			</span>
+		</el-dialog>
 	</el-container>
 </template>
 
@@ -74,6 +94,7 @@ export default {
 		return {
 			/* 页面参数 */
 			preloading: true,
+			dialogVisible: true,
 			/* 加载 MIDI 文件 */
 			midiName: "我爱你中国.mid",
 			/* Socket 相关变量 */
@@ -117,18 +138,22 @@ export default {
 		};
 	},
 	mounted() {
-		const name = prompt("请输入您的名字");
 		this.preloading = false;
-		if (name.trim() != "") {
-			const { midi, velocity, auto } = this.$route.query;
-			this.midiName = midi || this.midiName;
-			this.vRatio = velocity || this.vRatio;
-			this.allAuto = auto || this.allAuto;
-			return this.createSocket(name.trim());
-		}
-		this.exitOnError("无效输入.");
 	},
 	methods: {
+		confirmInputName() {
+			this.dialogVisible = false;
+			const name = this.name.trim();
+			if (name != "") {
+				const { midi, velocity, auto } = this.$route.query;
+				this.name = name;
+				this.midiName = midi || this.midiName;
+				this.vRatio = velocity || this.vRatio;
+				this.allAuto = auto || this.allAuto;
+				return this.createSocket(name.trim());
+			}
+			this.exitOnError("无效输入.");
+		},
 		/* Socket 相关方法 */
 		createSocket(name) {
 			this.preloading = true;
@@ -287,7 +312,8 @@ export default {
 						"startRain",
 						notes,
 						this.blankTime,
-						this.notesResources
+						this.notesResources,
+						this.userNotesMap[this.userId]
 					);
 					// 播放notes
 					this.playCurrentNotesTimer(
