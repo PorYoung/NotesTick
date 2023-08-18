@@ -164,7 +164,7 @@ const onUserConnect = (io, socket, roomConfig) => {
 	if (id === roomConfig.creator) {
 		roomConfig.midiName = midiName || roomConfig.midiName;
 		roomConfig.vRatio = vRatio || roomConfig.vRatio;
-		roomConfig.allAuto = allAuto || roomConfig.allAuto;
+		roomConfig.allAuto = allAuto === "true" || roomConfig.allAuto;
 		io.to(room).emit(SERVER_RESOURCE, {
 			userId: id,
 			type: "UPDATE",
@@ -421,6 +421,8 @@ const updateUserRunEnv = (socket, roomConfig, user, ready = true) => {
 		const allocStartPos = Math.floor(
 			(numResources - resourcesPerUser * numReady) / 2
 		);
+		logger("@updateUserRunEnv", "numResources", numResources);
+
 		// 分配资源给每个准备的用户
 		let endPos = 0;
 		let loopIdx = 0;
@@ -437,6 +439,7 @@ const updateUserRunEnv = (socket, roomConfig, user, ready = true) => {
 		});
 		roomConfig.allocStartPos = allocStartPos;
 		roomConfig.allocEndPos = endPos;
+		logger("@updateUserRunEnv", "roomConfig", roomConfig);
 	}
 };
 // 移除无效用户

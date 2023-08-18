@@ -82,7 +82,7 @@
 
 <script>
 import io from "socket.io-client";
-import piano from "./piano.vue";
+import piano from "./piano-nopad.vue";
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
@@ -98,10 +98,10 @@ export default {
 			/* 加载 MIDI 文件 */
 			midiName: "我爱你中国.mid",
 			/* Socket 相关变量 */
-			room: "cgb",
 			socket: null,
 			latency: 0,
 			roomCreator: "",
+			room: "cgb",
 			/* 音符资源 */
 			notesResources: [], // 乐曲涉及的全部音符
 			allocStartPos: 0, // 音符资源中起始被分配的音符的位置
@@ -123,6 +123,7 @@ export default {
 				k: "A4",
 				l: "B4",
 			},
+			noteKeysMap: {},
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
@@ -152,7 +153,6 @@ export default {
 				this.vRatio = velocity || this.vRatio;
 				this.allAuto = auto === "true" || this.allAuto;
 				this.room = room || this.room;
-				console.log(this.midiName, this.vRatio, this.allAuto);
 				return this.createSocket(name.trim());
 			}
 			this.exitOnError("无效输入.");
@@ -262,10 +262,13 @@ export default {
 				// 创建键盘映射
 				const notes = this.userNotesMap[this.userId] || [];
 				const keyNotesMap = {};
+				const noteKeysMap = {};
 				notes.forEach((note, index) => {
 					keyNotesMap[this.keyboardList[index]] = note;
+					noteKeysMap[note] = this.keyboardList[index];
 				});
 				this.keyNotesMap = keyNotesMap;
+				this.noteKeysMap = noteKeysMap;
 			}
 		},
 		onBroadcastNote(data) {
@@ -317,7 +320,8 @@ export default {
 						this.blankTime,
 						this.notesResources,
 						this.userNotesMap[this.userId],
-						this.keyNotesMap
+						this.keyNotesMap,
+						this.noteKeysMap
 					);
 					// 播放notes
 					this.playCurrentNotesTimer(

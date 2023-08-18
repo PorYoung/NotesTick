@@ -20,6 +20,7 @@
         "socket.io": "^4.7.2",
         "socket.io-client": "^4.4.0",
         "tone": "^14.7.77",
+        "uuid": "^9.0.0",
         "vue": "^2.6.11",
         "vue-router": "^3.6.5"
     },
