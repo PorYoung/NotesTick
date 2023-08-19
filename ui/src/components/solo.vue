@@ -472,5 +472,23 @@ export default {
 }
 .el-footer {
 	height: 30vh !important;
+	.btn {
+		display: inline-block;
+		margin-left: 20px;
+		padding: 8px;
+		border: 2px solid #1e1e1e; /* 深色边框 */
+		background-color: #292929; /* 深色背景 */
+		color: #fff; /* 浅色文字颜色 */
+		border-radius: 5px;
+		text-align: center;
+		text-decoration: none;
+		cursor: pointer;
+		transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+	}
+	.btn:hover {
+		background-color: #1e1e1e; /* 鼠标悬停时深色背景 */
+		border-color: #292929; /* 鼠标悬停时深色边框 */
+		color: #ccc; /* 鼠标悬停时浅色文字颜色 */
+	}
 }
 </style>
