@@ -54,7 +54,7 @@ const CLI_DISCONNECT = "disconnect";
  * 连接预拦截器
  */
 const preInterceptor = (socket, next) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	logger(socket.handshake.query);
 
 	// 参数校验
@@ -110,7 +110,7 @@ const commonInterceptor = (
 	next,
 	FUN = { name: "AnonymousFun" }
 ) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const roomConfig = RoomConfigMap.get(room);
 	if (!roomConfig) {
 		// @bug: 事件无法发送
@@ -133,7 +133,7 @@ const onUserConnect = (io, socket, roomConfig) => {
 	const {
 		name,
 		mode = "solo",
-		room = ROOM_ID,
+		room,
 		midiName,
 		vRatio,
 		allAuto,
@@ -178,7 +178,7 @@ const onUserConnect = (io, socket, roomConfig) => {
  * @param {Socket} socket
  */
 const onUserReady = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const { usersMap, readyIdsSet, userNotesMap } = roomConfig;
 	const id = tools.generateUniqueId(name);
 	updateUserRunEnv(socket, roomConfig, usersMap[id], true);
@@ -206,7 +206,7 @@ const onUserReady = (io, socket, roomConfig, data) => {
  * 用户取消准备事件
  */
 const onUserCancelReady = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const { readyIdsSet, userNotesMap } = roomConfig;
 	updateUserRunEnv(
 		socket,
@@ -226,7 +226,7 @@ const onUserCancelReady = (io, socket, roomConfig, data) => {
  * 用户退出事件
  */
 const onUserDisconnecting = (io, socket, roomConfig, reason) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const { usersMap, readyIdsSet, userNotesMap, creator } = roomConfig;
 	const numReady = readyIdsSet.size;
 	const id = tools.generateUniqueId(name);
@@ -260,7 +260,7 @@ const onUserDisconnect = (io, socket, roomConfig, reason) => {
  * 游戏开始事件
  */
 const onGameStart = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	roomConfig.startTick = +new Date();
 
 	// @todo 所有用户加载进度同步
@@ -272,7 +272,7 @@ const onGameStart = (io, socket, roomConfig, data) => {
 };
 
 const onGameOver = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	roomConfig.stopTick = +new Date();
 	roomConfig.started = false;
 
@@ -287,7 +287,7 @@ const onGameOver = (io, socket, roomConfig, data) => {
  * @param {*} data
  */
 const onBroadcastNote = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const {
 		userId,
 		note /* 音符 */,
@@ -312,7 +312,7 @@ const onBroadcastNote = (io, socket, roomConfig, data) => {
  * @param {*} data
  */
 const onReleaseNote = (io, socket, roomConfig, data) => {
-	const { name, mode = "solo", room = ROOM_ID } = socket.handshake.query;
+	const { name, mode = "solo", room } = socket.handshake.query;
 	const {
 		userId,
 		note /* 音符 */,
@@ -346,7 +346,7 @@ const onPing = (io, socket, roomConfig, { ping }) => {
  * @returns
  * @todo 根据前端参数创建房间
  */
-const createOrGetRoom = (room = ROOM_ID, midiName = DEFAULT_MIDI_NAME) => {
+const createOrGetRoom = (room, midiName = DEFAULT_MIDI_NAME) => {
 	let roomConfig = RoomConfigMap.get(room);
 	if (!roomConfig) {
 		const { midiJson, notes } = MidiHelper.parseMidiFile(DEFAULT_MIDI_NAME);
@@ -374,7 +374,7 @@ const createOrGetRoom = (room = ROOM_ID, midiName = DEFAULT_MIDI_NAME) => {
  * @param {*} room
  * @returns
  */
-const resetRoom = (socket, room = ROOM_ID) => {
+const resetRoom = (socket, room) => {
 	RoomConfigMap.delete(room);
 	// @todo: 重新启动房间
 };
