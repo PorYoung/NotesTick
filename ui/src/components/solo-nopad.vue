@@ -464,17 +464,5 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-.el-container {
-	overflow: hidden;
-	height: 100vh !important;
-}
-.el-header {
-	height: 10vh !important;
-}
-.el-main {
-	height: 70vh !important;
-}
-.el-footer {
-	height: 30vh !important;
-}
+@import "@/styles/solo.scss";
 </style>

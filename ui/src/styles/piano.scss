@@ -1,0 +1,60 @@
+.note-container {
+	position: relative;
+	width: 88%;
+	height: 100%;
+	max-height: 70vh;
+	margin: 0 auto;
+	padding-bottom: 24px;
+	box-sizing: border-box;
+
+	.canvas {
+		border: 2px solid transparent; /* 初始透明边框 */
+		border-image: linear-gradient(45deg, #ff0080, #7928ca);
+		border-radius: 10px;
+		border-image-slice: 1;
+		clip-path: inset(0 round 10px);
+		animation: borderAnimation 5s infinite linear;
+		box-shadow: 0 0 20px rgba(255, 0, 128, 0.6); /* 发光效果 */
+	}
+	.line {
+		width: 98%;
+		height: 24px;
+		line-height: 24px;
+		margin: 0 auto;
+		.key {
+			display: inline-block;
+			height: 24px;
+			font-size: 6px;
+			color: #000;
+			border: 1px solid #000;
+			background-color: #fff;
+			text-align: center;
+			box-sizing: border-box;
+		}
+
+		.bind-key {
+			background-color: antiquewhite;
+			box-shadow: 0 0 10px rgba(255, 102, 102, 0.8);
+		}
+
+		.active {
+			background-color: #bf15ee;
+			box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
+		}
+	}
+	@keyframes borderAnimation {
+		0%,
+		100% {
+			border-image-source: linear-gradient(45deg, #ff0080, #7928ca);
+		}
+		25% {
+			border-image-source: linear-gradient(45deg, #7928ca, #00bfff);
+		}
+		50% {
+			border-image-source: linear-gradient(45deg, #00bfff, #f9ca24);
+		}
+		75% {
+			border-image-source: linear-gradient(45deg, #f9ca24, #ff0080);
+		}
+	}
+}

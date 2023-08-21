@@ -300,46 +300,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/styles/piano.scss";
 .note-container {
-	position: relative;
-	width: 88%;
-	height: 100%;
-	max-height: 70vh;
-	margin: 0 auto;
-	padding-bottom: 24px;
-	box-sizing: border-box;
-
-	.canvas {
-		border: 1px solid #bf15ee;
-		border-radius: 8px;
-	}
-	.line {
-		width: 98%;
-		height: 24px;
-		line-height: 24px;
-		margin: 0 auto;
-		.key {
-			display: inline-block;
-			height: 24px;
-			font-size: 6px;
-			color: #000;
-			border: 1px solid #000;
-			background-color: #fff;
-			text-align: center;
-			box-sizing: border-box;
-		}
-
-		.bind-key {
-			background-color: antiquewhite;
-			box-shadow: 0 0 10px rgba(255, 102, 102, 0.8);
-		}
-
-		.active {
-			background-color: #bf15ee;
-			box-shadow: 0 0 10px rgba(255, 0, 102, 0.8);
-		}
-	}
-
 	.keys-hint {
 		// position: absolute;
 		// bottom: 24px;
