@@ -52,10 +52,15 @@ const InstrumentConstructor = (NAME = "Salamander piano") => {
 		sampler: sampler,
 		synth: synth,
 		caller: caller,
-		triggerAttack: (note, time = "+0", velocity = 1) => {
+		triggerAttack: (note, time = "+0", velocity = 0.5) => {
 			caller.triggerAttack(note, time, velocity);
 		},
-		triggerAttackRelease: (note, duration, time = "+0", velocity = 1) => {
+		triggerAttackRelease: (
+			note,
+			duration,
+			time = "+0",
+			velocity = 0.5
+		) => {
 			caller.triggerAttackRelease(note, duration, time, velocity);
 		},
 		triggerRelease: (note, time = "+0.1") => {

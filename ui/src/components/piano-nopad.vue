@@ -373,7 +373,7 @@ export default {
 	.hint-list-enter-from,
 	.hint-list-leave-to {
 		opacity: 0;
-		transform: translateX(30px);
+		transform: translateX(-30px);
 	}
 
 	/* 确保将离开的元素从布局流中删除
