@@ -1,5 +1,5 @@
 <!--
-  @name: solo.vue
+  @name: solo-hint.vue
   @date: 2023-08-12
   @version：0.0.1
   @describe: 合奏模式页面
@@ -87,7 +87,7 @@ import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
 export default {
-	name: "Solo",
+	name: "SoloHint",
 	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
 	components: { piano },
 	data() {
