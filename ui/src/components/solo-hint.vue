@@ -11,7 +11,7 @@
 			<el-progress :percentage="50" status="exception"></el-progress>
 		</el-header>
 		<el-main>
-			<piano ref="piano" />
+			<piano-hint ref="piano" />
 		</el-main>
 		<el-footer>
 			<el-row :gutter="2">
@@ -82,14 +82,14 @@
 
 <script>
 import io from "socket.io-client";
-import piano from "./piano-nopad.vue";
+import PianoHint from "./piano-hint.vue";
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
 export default {
 	name: "SoloHint",
 	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
-	components: { piano },
+	components: { PianoHint },
 	data() {
 		return {
 			/* 页面参数 */

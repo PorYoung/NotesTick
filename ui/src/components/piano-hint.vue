@@ -50,6 +50,7 @@ import * as Tone from "tone";
 import MidiMixin from "@/mixins/midi";
 import { v4 } from "uuid";
 export default {
+    name: "piano-hint",
 	mixins: [MidiMixin],
 	computed: {
 		canvasWidth() {
