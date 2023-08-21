@@ -254,22 +254,18 @@ export default {
 			this.userNotesMap = data.userNotesMap;
 			this.allocStartPos = data.allocStartPos;
 			this.allocEndPos = data.allocEndPos;
-			console.log(data);
+			console.debug(data);
 
-			console.log(data);
-
-			if (this.userId === data.userId) {
-				// 创建键盘映射
-				const notes = this.userNotesMap[this.userId] || [];
-				const keyNotesMap = {};
-				const noteKeysMap = {};
-				notes.forEach((note, index) => {
-					keyNotesMap[this.keyboardList[index]] = note;
-					noteKeysMap[note] = this.keyboardList[index];
-				});
-				this.keyNotesMap = keyNotesMap;
-				this.noteKeysMap = noteKeysMap;
-			}
+			// 创建键盘映射
+			const notes = this.userNotesMap[this.userId] || [];
+			const keyNotesMap = {};
+			const noteKeysMap = {};
+			notes.forEach((note, index) => {
+				keyNotesMap[this.keyboardList[index]] = note;
+				noteKeysMap[note] = this.keyboardList[index];
+			});
+			this.keyNotesMap = keyNotesMap;
+			this.noteKeysMap = noteKeysMap;
 		},
 		onBroadcastNote(data) {
 			// {

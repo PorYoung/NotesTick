@@ -23,6 +23,7 @@ const DEFAULT_CONFIG = {
 	midiName: DEFAULT_MIDI_NAME,
 	vRatio: 0.75,
 	allAuto: false,
+	reset: false,
 };
 // 用户对象模板
 const USER_TEMPLATE = {
@@ -112,7 +113,12 @@ const commonInterceptor = (
 ) => {
 	const { name, mode = "solo", room } = socket.handshake.query;
 	const roomConfig = RoomConfigMap.get(room);
-	if (!roomConfig) {
+	if (
+		!roomConfig ||
+		!roomConfig.readyIdsSet ||
+		!roomConfig.usersMap ||
+		roomConfig.reset
+	) {
 		// @bug: 事件无法发送
 		// socket.emit(SERVER_TO_DISCONNECT, { errMsg: `房间 ${room} 不存在.` });
 		// socket.disconnect();
@@ -233,10 +239,10 @@ const onUserDisconnecting = (io, socket, roomConfig, reason) => {
 	// 判断是否是管理员离开，离开则重置游戏
 	if (id === creator) {
 		logger("@onUserDisconnecting", `reset room ${room}`);
-		resetRoom(room);
+		resetRoom(socket, room);
 		// @bug: 事件无法发送
 		// io.to(room).emit(SERVER_TO_DISCONNECT, `管理员关闭了房间 ${room}.`);
-		io.in(room).disconnectSockets();
+		io.in(room).disconnectSockets(true);
 		return;
 	}
 
@@ -348,7 +354,7 @@ const onPing = (io, socket, roomConfig, { ping }) => {
  */
 const createOrGetRoom = (room, midiName = DEFAULT_MIDI_NAME) => {
 	let roomConfig = RoomConfigMap.get(room);
-	if (!roomConfig) {
+	if (!roomConfig || roomConfig.reset) {
 		const { midiJson, notes } = MidiHelper.parseMidiFile(DEFAULT_MIDI_NAME);
 		const { allocList, countList, restList } = MidiHelper.countNotes(notes);
 
@@ -375,7 +381,8 @@ const createOrGetRoom = (room, midiName = DEFAULT_MIDI_NAME) => {
  * @returns
  */
 const resetRoom = (socket, room) => {
-	RoomConfigMap.delete(room);
+	let roomConfig = RoomConfigMap.get(room);
+	roomConfig.reset = true;
 	// @todo: 重新启动房间
 };
 /**

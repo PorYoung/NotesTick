@@ -52,7 +52,7 @@ export default {
       synth: new Tone.Synth().toDestination(),
       audioContextStarted: false,
       // midiNotes: null,
-      midiName: "我爱你中国",
+      midiName: "我爱你中国.mid",
       activeNotes: [], // 记录当前按下的音符,
       bindNotes: [],
     };

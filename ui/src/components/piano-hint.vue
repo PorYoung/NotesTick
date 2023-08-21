@@ -50,7 +50,7 @@ import * as Tone from "tone";
 import MidiMixin from "@/mixins/midi";
 import { v4 } from "uuid";
 export default {
-    name: "piano-hint",
+	name: "piano-hint",
 	mixins: [MidiMixin],
 	computed: {
 		canvasWidth() {
@@ -83,7 +83,7 @@ export default {
 			synth: new Tone.Synth().toDestination(),
 			audioContextStarted: false,
 			// midiNotes: null,
-			midiName: "我爱你中国",
+			midiName: "我爱你中国.mid",
 			activeNotes: [], // 记录当前按下的音符,
 			bindNotes: [],
 			keyNotesMap: {},
