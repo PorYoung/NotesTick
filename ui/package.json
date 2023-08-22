@@ -12,6 +12,7 @@
     "license": "ISC",
     "dependencies": {
         "@tonejs/midi": "^2.0.28",
+        "animate.css": "^4.1.1",
         "cache-loader": "^4.1.0",
         "core-js": "^3.6.5",
         "cors": "^2.8.5",

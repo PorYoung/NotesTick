@@ -22,16 +22,14 @@
 				}}
 			</div>
 		</div>
-		<!-- <el-row class="keys-hint" type="flex" justify="space-around">
-			<el-col
-				v-for="(value, key) of keyNotesMap"
-				:key="key"
-				:class="`hint ${hintedBlocks.includes(value) ? 'active' : ''}`"
-			>
-				{{ key.toLocaleUpperCase() }}
-			</el-col>
-		</el-row> -->
-		<el-row class="keys-hint" type="flex" justify="center">
+		<el-row
+			class="keys-hint"
+			type="flex"
+			justify="center"
+			:style="{
+				'padding-left': firstBindKeyOffset * blockWidth * 2 + 'px',
+			}"
+		>
 			<transition-group name="hint-list" tag="p">
 				<el-col
 					v-for="block in hintedBlocksFiltered"
@@ -64,10 +62,17 @@ export default {
 				(item) => item.key in this.keyNotesMap
 			);
 		},
+		firstBindKeyOffset() {
+			if (this.bindNotes.length <= 0) return 0;
+			return (
+				this.notesResources.indexOf(this.bindNotes[0]) -
+				Math.floor(this.notesResources.length / 2)
+			);
+		},
 	},
 	data() {
 		return {
-			notesResources: [],
+			notesResources: ["C4"],
 			ctx: null,
 			animationId: null,
 			WIDTH: 0,
@@ -82,7 +87,6 @@ export default {
 			notes: [],
 			synth: new Tone.Synth().toDestination(),
 			audioContextStarted: false,
-			// midiNotes: null,
 			midiName: "我爱你中国.mid",
 			activeNotes: [], // 记录当前按下的音符,
 			bindNotes: [],
@@ -246,9 +250,13 @@ export default {
 					notesBlocks,
 					lastTime
 				);
-				updatedBlocks.length > 0
-					? this.draw(updatedBlocks, now)
-					: cancelAnimationFrame(animationId);
+				cancelAnimationFrame(this.animationId);
+				if (updatedBlocks.length > 0) {
+					this.$emit("progress", +new Date());
+					this.draw(updatedBlocks, now);
+				} else {
+					this.$emit("finished", true);
+				}
 			});
 		},
 	},
@@ -267,7 +275,9 @@ export default {
 				notesResources,
 				bindNotes,
 				keyNotesMap,
-				noteKeysMap
+				noteKeysMap,
+				allocStartPos,
+				allocEndPos
 			) => {
 				this.notes = notes;
 				this.blankTime = blankTime;
@@ -275,7 +285,8 @@ export default {
 				this.bindNotes = bindNotes;
 				this.keyNotesMap = keyNotesMap;
 				this.noteKeysMap = noteKeysMap;
-				// this.loadMidiNotes();
+				this.allocStartPos = allocStartPos;
+				this.allocEndPos = allocEndPos;
 				this.createNote();
 			}
 		);
@@ -336,7 +347,7 @@ export default {
 	.hint-list-enter-from,
 	.hint-list-leave-to {
 		opacity: 0;
-		transform: translateX(-30px);
+		transform: translateX(-50px);
 	}
 
 	/* 确保将离开的元素从布局流中删除

@@ -7,7 +7,6 @@ const MidiHelper = require("../utils/midiHelper");
 // 房间参数配置
 const RoomConfigMap = new Map();
 // 当前默认只有一个房间
-const ROOM_ID = "cgb";
 const DEFAULT_MIDI_NAME = "我爱你中国.mid";
 // 房间默认配置
 const DEFAULT_CONFIG = {
@@ -143,6 +142,7 @@ const onUserConnect = (io, socket, roomConfig) => {
 		midiName,
 		vRatio,
 		allAuto,
+		maxNotesMapNum,
 	} = socket.handshake.query;
 	const { usersMap, maxPeople, notesResources, readyIdsSet } = roomConfig;
 	const id = tools.generateUniqueId(name);
@@ -171,6 +171,7 @@ const onUserConnect = (io, socket, roomConfig) => {
 		roomConfig.midiName = midiName || roomConfig.midiName;
 		roomConfig.vRatio = vRatio || roomConfig.vRatio;
 		roomConfig.allAuto = allAuto === "true" || roomConfig.allAuto;
+		roomConfig.maxNotesMapNum = maxNotesMapNum || roomConfig.maxNotesMapNum;
 		io.to(room).emit(SERVER_RESOURCE, {
 			userId: id,
 			type: "UPDATE",
@@ -237,7 +238,7 @@ const onUserDisconnecting = (io, socket, roomConfig, reason) => {
 	const numReady = readyIdsSet.size;
 	const id = tools.generateUniqueId(name);
 	// 判断是否是管理员离开，离开则重置游戏
-	if (id === creator) {
+	if (id === creator || roomConfig.started) {
 		logger("@onUserDisconnecting", `reset room ${room}`);
 		resetRoom(socket, room);
 		// @bug: 事件无法发送

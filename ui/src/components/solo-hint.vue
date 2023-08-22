@@ -8,7 +8,10 @@
 <template>
 	<el-container v-loading.fullscreen.lock="preloading" class="main-wrapper">
 		<el-header>
-			<el-progress :percentage="50" status="exception"></el-progress>
+			<el-progress
+				:percentage="progress"
+				status="exception"
+			></el-progress>
 		</el-header>
 		<el-main>
 			<piano-hint ref="piano" />
@@ -77,6 +80,11 @@
 				>
 			</span>
 		</el-dialog>
+		<div class="logo-rain" v-if="finished">
+			<img src="@static/images/cgb.png" class="logo-rain-item" />
+			<img src="@static/images/cgb.png" class="logo-rain-item" />
+			<h2 class="animate__animated animate__zoomIn">✨🎉音乐完成✨🎉</h2>
+		</div>
 	</el-container>
 </template>
 
@@ -86,6 +94,7 @@ import PianoHint from "./piano-hint.vue";
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
+import animate from "animate.css";
 export default {
 	name: "SoloHint",
 	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
@@ -111,24 +120,19 @@ export default {
 			allAuto: false,
 			loadedServerResources: false,
 			started: false,
+			finished: false,
+			maxKeys: 6,
 			toStartTime: 3000, // 正式启动倒计时ms
 			blankTime: 1000,
-			keyboardList: ["a", "s", "d", "f", "j", "k", "l"],
-			keyNotesMap: {
-				a: "C4",
-				s: "D4",
-				d: "E4",
-				f: "F4",
-				j: "G4",
-				k: "A4",
-				l: "B4",
-			},
+			keyboardList: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+			keyNotesMap: {},
 			noteKeysMap: {},
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
 			readyText: "您尚未准备",
 			startTime: "",
+			progress: 0,
 			/* 用户相关变量 */
 			userId: "",
 			name: "",
@@ -141,18 +145,36 @@ export default {
 	},
 	mounted() {
 		this.preloading = false;
+		this.$refs.piano.$on("finished", () => {
+			this.finished = true;
+			this.progress = 100;
+			this.socket.emit("GAME_OVER");
+		});
+		this.$refs.piano.$on("progress", (now) => {
+			const last = this.midiNotes.slice(-1).pop();
+			this.progress = last
+				? ((now - this.startTime) /
+						(this.blankTime + last.time * 1000)) *
+				  100
+				: 0;
+		});
 	},
 	methods: {
 		confirmInputName() {
 			this.dialogVisible = false;
 			const name = this.name.trim();
 			if (name != "") {
-				const { room, midi, velocity, auto } = this.$route.query;
+				const { room, midi, velocity, auto, maxKeys } =
+					this.$route.query;
 				this.name = name;
 				this.midiName = midi || this.midiName;
 				this.vRatio = velocity || this.vRatio;
 				this.allAuto = auto === "true" || this.allAuto;
 				this.room = room || this.room;
+				this.maxKeys =
+					maxKeys > 0 && maxKeys <= this.keyboardList.length
+						? maxKeys
+						: this.maxKeys;
 				return this.createSocket(name.trim());
 			}
 			this.exitOnError("无效输入.");
@@ -170,6 +192,7 @@ export default {
 					midiName: this.midiName,
 					vRatio: this.vRatio,
 					allAuto: this.allAuto,
+					maxNotesMapNum: this.maxKeys,
 				},
 			});
 			this.name = name;
@@ -227,7 +250,6 @@ export default {
 			this.exitOnError(data.errMsg);
 		},
 		onUpdatePlayers(data) {
-			console.log(data);
 			this.updatePlayersList(data.usersMap);
 		},
 		onResources(data) {
@@ -302,6 +324,7 @@ export default {
 			this.started = true;
 			const notes = this.midiNotes;
 			const _toStartTime = this.toStartTime;
+			this.startTime = +new Date();
 			const countFun = () => {
 				this.$message.success(`倒计时 ${this.toStartTime / 1000}`);
 				this.toStartTime -= 1000;
@@ -317,7 +340,9 @@ export default {
 						this.notesResources,
 						this.userNotesMap[this.userId],
 						this.keyNotesMap,
-						this.noteKeysMap
+						this.noteKeysMap,
+						this.allocStartPos,
+						this.allocEndPos
 					);
 					// 播放notes
 					this.playCurrentNotesTimer(
@@ -431,7 +456,6 @@ export default {
 		// 创建音频元素
 		// 播放音符的函数
 		playSound(note) {
-			console.log("播放音符声音", note);
 			this.instrument.triggerAttack(note);
 		},
 		stopSound(note) {
@@ -461,4 +485,58 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 @import "@/styles/solo.scss";
+
+.logo-rain {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	overflow: hidden;
+
+	&-item {
+		position: absolute;
+		width: 460px;
+		height: 400px;
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		&:nth-child(1) {
+			animation: logoAnimationLeft 3s 1;
+			animation-fill-mode: forwards;
+		}
+		&:nth-child(2) {
+			animation: logoAnimationRight 3s 1;
+			animation-fill-mode: forwards;
+		}
+	}
+}
+@keyframes logoAnimationLeft {
+	0% {
+		transform: rotate(0deg) scale(1);
+		top: 0;
+		left: 0;
+		opacity: 0;
+	}
+	100% {
+		transform: rotate(720deg) scale(0.5);
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		opacity: 1;
+	}
+}
+
+@keyframes logoAnimationRight {
+	0% {
+		transform: rotate(0deg) scale(1);
+		top: 0;
+		left: 100%;
+		opacity: 0;
+	}
+	100% {
+		transform: rotate(720deg) scale(0.5);
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		opacity: 1;
+	}
+}
 </style>
