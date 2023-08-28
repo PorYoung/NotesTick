@@ -5,7 +5,10 @@
     "scripts": {
         "dev": "vue-cli-service serve --NODE_ENV=development",
         "serve": "vue-cli-service serve",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "vue-cli-service build --NODE_ENV=production",
+        "build:dev": "vue-cli-service build --NODE_ENV=development",
+        "build:prod": "vue-cli-service build --NODE_ENV=production"
     },
     "keywords": [],
     "author": "",

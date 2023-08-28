@@ -34,7 +34,8 @@ Set.prototype.deleteByKey = (key, val) => {
 };
 
 // 静态文件服务
-app.use(express.static("public"));
+app.use("/static", express.static("static"));
+app.use(express.static("public", { index: "index.html" }));
 
 // 连接前检查
 io.use((socket, next) => {
@@ -48,3 +49,7 @@ io.on("connection", (socket) => {
 
 	solo.createSoloEnv(io, socket);
 });
+
+// HTTP Server
+const midiRouter = require("./app/midi");
+app.use("/api", midiRouter);

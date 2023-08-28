@@ -48,7 +48,7 @@ body,
 	left: 0;
 	right: 0;
 	z-index: -1;
-    
+
 	.smoke {
 		opacity: 0.8066;
 		position: absolute;
@@ -65,48 +65,48 @@ body,
 		&:nth-child(1) {
 			background-image: url("~@/../static/images/smoke_layer1_blur.webp");
 			animation: flow-1 38s ease-in-out -10s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(2) {
 			background-image: url("~@/../static/images/smoke_layer1_blur.webp");
 			transform: scale(1, -1);
 			animation: flow-2 33s ease-in-out -9s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(3) {
 			background-image: url("~@/../static/images/smoke_layer1_blur.webp");
 			transform: scale(-1, 1);
 			animation: flow-3 38s ease-in-out -8s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(4) {
 			background-image: url("~@/../static/images/smoke_layer1_blur.webp");
 			transform: scale(-1, -1);
 			animation: flow-4 31s ease-in-out -2s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(5) {
 			opacity: 0.05;
 			animation: flow-1 37s ease-in-out -30s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(6) {
 			opacity: 0.05;
 			transform: scale(1, -1);
 			animation: flow-2 33s ease-in-out -29s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(7) {
 			opacity: 0.05;
 			transform: scale(-1, 1);
 			animation: flow-3 37s ease-in-out -28s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 		&:nth-child(8) {
 			opacity: 0.05;
 			transform: scale(-1, -1);
 			animation: flow-4 30s ease-in-out -27s 1 alternate;
-            animation-fill-mode: forwards;
+			animation-fill-mode: forwards;
 		}
 	}
 }
@@ -178,12 +178,20 @@ body,
 }
 
 .player img {
-	width: 100px;
-	height: 100px;
+	width: 80px;
+	height: 80px;
 	object-fit: cover;
 	border-radius: 50%;
 }
 
 .player span {
 	margin-top: 5px;
+}
+
+.color-white {
+	color: #fff;
+}
+
+.color-link {
+	color: #409eff;
 }

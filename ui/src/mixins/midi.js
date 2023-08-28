@@ -7,6 +7,7 @@ let playStartTime = null;
 export default {
 	data() {
 		return {
+			notesPlayTimers: new Set(),
 			midiNotes: [],
 			vRatio: 0.75,
 		};
@@ -80,19 +81,23 @@ export default {
 			this.midiNotes.forEach((note) => {
 				if (skipNotes.includes(note.name)) return;
 
-				setTimeout(() => {
+				const playTimer = setTimeout(() => {
 					this.instrument.triggerAttack(
 						note.name,
 						"+0",
 						note.velocity
 					);
+					this.notesPlayTimers.delete(playTimer);
 				}, blankTime + note.time * 1000);
-				setTimeout(() => {
+				const releaseTimer = setTimeout(() => {
 					this.instrument.triggerRelease(
 						note.name,
 						blankTime + (note.duration + note.time) * 1000
 					);
+					this.notesPlayTimers.delete(releaseTimer);
 				});
+				this.notesPlayTimers.add(playTimer);
+				this.notesPlayTimers.delete(releaseTimer);
 			});
 		},
 		playCurrentNotesSingleTimer(notes, blankTime = 1000, skipNotes = []) {
@@ -120,11 +125,19 @@ export default {
 					);
 					currentNoteIndex++;
 				}
-				setTimeout(this.playCurrentNotesSingleTimer, 10);
+				this.notesPlayTimers.clear();
+				const timer = setTimeout(this.playCurrentNotesSingleTimer, 10);
+				this.notesPlayTimers.add(timer);
 			} else {
 				// 音乐播放完毕
 				console.log("音乐播放完毕");
 			}
+		},
+		cleanPlayTimer() {
+			for (const timer of this.notesPlayTimers) {
+				clearTimeout(timer);
+			}
+			this.notesPlayTimers.clear();
 		},
 	},
 };

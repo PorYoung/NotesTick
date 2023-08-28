@@ -547,7 +547,7 @@ const createSoloEnv = (io, socket) => {
 			io,
 			socket,
 			(roomConfig) => {
-				onBroadcastNote(io, socket, data, roomConfig);
+				onBroadcastNote(io, socket, roomConfig, data);
 			},
 			onBroadcastNote
 		);
@@ -560,7 +560,7 @@ const createSoloEnv = (io, socket) => {
 			io,
 			socket,
 			(roomConfig) => {
-				onReleaseNote(io, socket, data, roomConfig);
+				onReleaseNote(io, socket, roomConfig, data);
 			},
 			onReleaseNote
 		);

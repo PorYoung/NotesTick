@@ -18,17 +18,16 @@
 		</el-main>
 		<el-footer>
 			<el-row :gutter="2">
-				<el-col :span="6">
+				<el-col :span="8">
 					<button
 						class="btn"
 						:disabled="this.started"
 						@click="toReady"
 					>
 						{{ this.started ? "游戏已开始" : readyText }}
-						{{ _len(readyIds) }} / {{ _len(usersMap) }} 玩家已准备
 					</button>
 				</el-col>
-				<el-col :span="6">
+				<el-col :span="8">
 					<button
 						class="btn"
 						:disabled="
@@ -40,12 +39,13 @@
 					>
 						{{
 							this.userId === this.roomCreator
-								? "开始游戏"
+								? `开始游戏 (${_len(readyIds)}
+						/ ${_len(usersMap)} 玩家已准备)`
 								: "等待游戏开始"
 						}}
 					</button>
 				</el-col>
-				<el-col :span="6"> 网络延迟:{{ latency }} ms </el-col>
+				<el-col :span="8"> 网络延迟:{{ latency }} ms </el-col>
 			</el-row>
 
 			<el-row ref="usersMap" :gutter="1" type="flex">
@@ -71,9 +71,13 @@
 			:before-close="() => {}"
 			width="30%"
 		>
-			<el-input placeholder="如：admin" v-model="name">
-				<template slot="prepend">请输入您的名字</template>
-			</el-input>
+			<el-form>
+				<el-form-item>
+					<el-input placeholder="如：admin" v-model="name">
+						<template slot="prepend">请输入您的名字</template>
+					</el-input>
+				</el-form-item>
+			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button type="primary" @click="confirmInputName"
 					>确 定</el-button
@@ -130,7 +134,7 @@ export default {
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
-			readyText: "您尚未准备",
+			readyText: "点我准备 ",
 			startTime: "",
 			progress: 0,
 			/* 用户相关变量 */
@@ -140,7 +144,7 @@ export default {
 				name: "",
 			},
 			readyIds: [],
-			/* 音符雨 */
+			ignorePreventKeys: ["F11", "F12", "F5"],
 		};
 	},
 	mounted() {
@@ -298,11 +302,15 @@ export default {
 			// }
 			if (data.userId === this.userId) return;
 
+			console.log(data);
+
 			// 播放音符声音
 			this.playSound(data.note);
 
 			// 闪烁头像
 			this.blinkAvatar(data.userId);
+
+			this.$refs.piano.$emit("remotePressed", data.note);
 		},
 		onReleaseNote(data) {
 			// {
@@ -317,7 +325,9 @@ export default {
 			this.stopSound(data.note);
 
 			// 闪烁头像
-			this.blinkAvatar(data.id);
+			this.blinkAvatar(data.userId);
+
+			this.$refs.piano.$emit("remoteReleased", data.note);
 		},
 		onStartEvent(data) {
 			this.preloading = false;
@@ -329,7 +339,7 @@ export default {
 				this.$message.success(`倒计时 ${this.toStartTime / 1000}`);
 				this.toStartTime -= 1000;
 				if (this.toStartTime > 0) {
-					setTimeout(countFun, 1000);
+					const timer = setTimeout(countFun, 1000);
 				} else {
 					this.toStartTime = _toStartTime;
 					// 启动音乐雨
@@ -367,7 +377,7 @@ export default {
 				return;
 			}
 			this.ready = !this.ready;
-			this.readyText = this.ready ? "取消准备" : "您尚未准备";
+			this.readyText = this.ready ? "取消准备" : "点我准备";
 			if (this.ready) {
 				// 显示加载动画
 				this.preloading = true;
@@ -417,8 +427,11 @@ export default {
 			window.addEventListener("keyup", this.onKeyUp);
 		},
 		onKeyDown(e) {
-			e.key != "F11" && e.preventDefault();
 			if (!this.ready || !this.instrument) return;
+			// !this.ignorePreventKeys.includes(e.key) && e.preventDefault();
+			if (e.key in this.keyNotesMap) {
+				e.preventDefault();
+			}
 
 			if (e.key in this.keyNotesMap && !this.keyPressed.has(e.key)) {
 				const note = this.keyNotesMap[e.key];
@@ -431,7 +444,7 @@ export default {
 					note,
 					tickTime: +new Date() - this.startTime,
 				});
-				this.blinkAvatar();
+				this.blinkAvatar(this.userId);
 			}
 		},
 		onKeyUp(e) {
@@ -470,14 +483,21 @@ export default {
 		updatePlayersList(data) {
 			this.usersMap = data;
 		},
-		exitOnError(err) {
-			this.$message.error(`${err} 【即将返回首页!】`);
+		cleanPlayer() {
 			this.$refs.piano.$emit("stopRain");
 			this.instrument && this.instrument.releaseAll();
+			this.cleanPlayTimer();
+		},
+		exitOnError(err) {
+			this.$message.error(`${err} 【即将返回首页!】`);
+			this.cleanPlayer();
 			setTimeout(() => {
 				this.$router.replace("/home");
 			}, 1500);
 		},
+	},
+	beforeDestroy() {
+		this.cleanPlayer();
 	},
 };
 </script>

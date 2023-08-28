@@ -3,13 +3,14 @@ const path = require("path");
 let httpServer = `http://${process.env.API_HOST}`;
 let wsServer = `ws://${process.env.API_HOST}`;
 module.exports = {
+	publicPath: process.env.NODE_ENV === "production" ? "/app/" : "/",
 	devServer: {
 		proxy: {
 			"/api": {
 				target: httpServer,
 				changeOrigin: true,
 				pathRewrite: {
-					"^/api": "",
+					"^/api": "/api",
 				},
 			},
 			"/static": {

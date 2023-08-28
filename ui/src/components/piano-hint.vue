@@ -13,6 +13,7 @@
 				:class="{
 					active: activeNotes.includes(note),
 					'bind-key': bindNotes.includes(note),
+					'remote-pressed': remotePressedNotes.includes(note),
 				}"
 			>
 				{{
@@ -34,7 +35,10 @@
 				<el-col
 					v-for="block in hintedBlocksFiltered"
 					:key="block.id"
-					:class="{ hint: true, active: activeNotes.includes(note) }"
+					:class="{
+						hint: true,
+						active: activeNotes.includes(block.note),
+					}"
 				>
 					{{ block.key.toLocaleUpperCase() }}
 				</el-col>
@@ -94,6 +98,7 @@ export default {
 			noteKeysMap: {},
 			hintEarlyTime: 1000,
 			hintedBlocks: [],
+			remotePressedNotes: [],
 		};
 	},
 	methods: {
@@ -259,6 +264,16 @@ export default {
 				}
 			});
 		},
+		onRemotePressed(note) {
+			this.remotePressedNotes.push(note);
+			console.log(this.remotePressedNotes);
+		},
+		onRemoteReleased(note) {
+			this.remotePressedNotes.splice(
+				this.remotePressedNotes.indexOf(note),
+				1
+			);
+		},
 	},
 	mounted() {
 		const canvas = this.$refs.canvas;
@@ -306,6 +321,12 @@ export default {
 				const index = this.activeNotes.indexOf(note);
 				this.activeNotes.splice(index, 1);
 			}
+		});
+		this.$on("remotePressed", (note) => {
+			this.onRemotePressed(note);
+		});
+		this.$on("remoteReleased", (note) => {
+			this.onRemoteReleased(note);
 		});
 	},
 };

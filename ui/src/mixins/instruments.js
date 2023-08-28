@@ -55,12 +55,7 @@ const InstrumentConstructor = (NAME = "Salamander piano") => {
 		triggerAttack: (note, time = "+0", velocity = 0.6) => {
 			caller.triggerAttack(note, time, velocity);
 		},
-		triggerAttackRelease: (
-			note,
-			duration,
-			time = "+0",
-			velocity = 0.5
-		) => {
+		triggerAttackRelease: (note, duration, time = "+0", velocity = 0.5) => {
 			caller.triggerAttackRelease(note, duration, time, velocity);
 		},
 		triggerRelease: (note, time = "+0.1") => {
@@ -93,5 +88,8 @@ export default {
 				});
 			});
 		},
+	},
+	beforeDestroy() {
+		this.instrument && this.instrument.releaseAll();
 	},
 };

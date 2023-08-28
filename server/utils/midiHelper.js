@@ -100,7 +100,9 @@ const NOTES_LIST = [
  * @returns {string} filePath
  */
 const resolvePath = (fileName) => {
-	return path.resolve(process.cwd(), "public/static/midi/", fileName).toString();
+	return path
+		.resolve(process.cwd(), "static/midi/", fileName)
+		.toString();
 };
 
 /**
@@ -136,7 +138,12 @@ const countNotes = (notes) => {
 	return { allocList, countList, restList };
 };
 
+const listAllMidi = () => {
+	return fs.readdirSync(resolvePath(""));
+};
+
 module.exports = {
 	parseMidiFile,
 	countNotes,
+    listAllMidi
 };

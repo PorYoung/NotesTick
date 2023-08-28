@@ -21,6 +21,7 @@
 		height: 24px;
 		line-height: 24px;
 		margin: 0 auto;
+		white-space: nowrap;
 		.key {
 			display: inline-block;
 			height: 24px;
@@ -30,6 +31,10 @@
 			background-color: #fff;
 			text-align: center;
 			box-sizing: border-box;
+            &.remote-pressed {
+				border: chocolate;
+				color: chocolate;
+			}
 		}
 
 		.bind-key {
