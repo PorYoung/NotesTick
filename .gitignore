@@ -1,4 +1,10 @@
 .vscode
 node_modules
 package-lock.json
-test
+test*
+
+# for dev and donnot push
+server/static/sampler/README
+docs/workflow.eddx
+ui/dist/
+server/public/
