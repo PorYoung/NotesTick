@@ -8,3 +8,4 @@ server/static/sampler/README
 docs/workflow.eddx
 ui/dist/
 server/public/
+server/out/
