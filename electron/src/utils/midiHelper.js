@@ -94,15 +94,13 @@ const NOTES_LIST = [
 ];
 
 /**
- * 获取midi文件的时间路径
+ * 获取midi文件的实际路径
  *
  * @param {string} fileName
  * @returns {string} filePath
  */
 const resolvePath = (fileName) => {
-	return path
-		.resolve(process.cwd(), "static/midi/", fileName)
-		.toString();
+	return path.resolve(__dirname, "../static/midi/", fileName).toString();
 };
 
 /**
@@ -145,5 +143,5 @@ const listAllMidi = () => {
 module.exports = {
 	parseMidiFile,
 	countNotes,
-    listAllMidi
+	listAllMidi,
 };

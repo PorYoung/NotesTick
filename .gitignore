@@ -4,8 +4,8 @@ package-lock.json
 test*
 
 # for dev and donnot push
-server/static/sampler/README
+electron/src/static/sampler/README
 docs/workflow.eddx
 ui/dist/
-server/public/
-server/out/
+electron/src/public/
+electron/out/

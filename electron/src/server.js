@@ -1,5 +1,7 @@
+const path = require("path");
 const express = require("express");
 const app = express();
+
 const http = require("http").createServer(app);
 const server = app.listen(3000, function () {
 	console.log("server running on port 3000");
@@ -34,8 +36,10 @@ Set.prototype.deleteByKey = (key, val) => {
 };
 
 // 静态文件服务
-app.use("/static", express.static("static"));
-app.use(express.static("public", { index: "index.html" }));
+app.use("/static", express.static(path.resolve(__dirname, "./static")));
+app.use(
+	express.static(path.resolve(__dirname, "./public"), { index: "index.html" })
+);
 
 // 连接前检查
 io.use((socket, next) => {

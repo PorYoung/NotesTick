@@ -1,11 +1,12 @@
-const { app, BrowserWindow, screen, webFrame } = require("electron");
+const { app, BrowserWindow, screen } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
+const server = require("./server");
 
 const appName = app.getPath("exe");
 const windowConfig = {
-	productName: "NotesTick",
-	appId: "NotesTick",
+	productName: "notestick",
+	appId: "notestick",
 	title: "NotesTick",
 	fullscreenable: true,
 	fullscreen: false,
@@ -19,7 +20,8 @@ const windowConfig = {
 		webSecurity: false,
 	},
 };
-const expressPath = path.join(__dirname, "./server.js");
+
+const expressPath = "./server.js";
 const expressUrl = "http://localhost:3000/app";
 
 let mainWindow;
@@ -47,13 +49,13 @@ const redirectOutput = (stream) => {
 };
 
 function createWindow() {
-	const expressAppProcess = spawn(appName, [expressPath], {
-		env: { ELECTRON_RUN_AS_NODE: "1" },
-	});
+	// const expressAppProcess = spawn(appName, [expressPath], {
+	// 	env: { ELECTRON_RUN_AS_NODE: "1" },
+	// });
 
-	[expressAppProcess.stdout, expressAppProcess.stderr].forEach(
-		redirectOutput
-	);
+	// [expressAppProcess.stdout, expressAppProcess.stderr].forEach(
+	// 	redirectOutput
+	// );
 
 	const size = screen.getPrimaryDisplay().workAreaSize;
 	const width = size.width;
@@ -79,7 +81,9 @@ function createWindow() {
 	});
 }
 
-app.on("ready", createWindow);
+app.on("ready", () => {
+	createWindow();
+});
 app.on("window-all-closed", () => {
 	app.quit();
 });

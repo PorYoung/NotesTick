@@ -1,0 +1,40 @@
+{
+    "name": "notestick",
+    "version": "1.0.0",
+    "description": "notestick music game",
+    "main": "./src/index.js",
+    "scripts": {
+        "dev": "DEBUG=app:* node ./src/server.js",
+        "winDev": "@powershell -Command $env:DEBUG='app:*';node ./src/server.js",
+        "serve": "node ./src/server.js",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "electron-forge start",
+        "package": "electron-forge package",
+        "make": "electron-forge make"
+    },
+    "keywords": [
+        "music game",
+        "tonejs"
+    ],
+    "author": "PorYoung, Zehong Chen",
+    "license": "MIT",
+    "dependencies": {
+        "@tonejs/midi": "^2.0.28",
+        "core-js": "^3.6.5",
+        "cors": "^2.8.5",
+        "debug": "^4.3.4",
+        "electron-squirrel-startup": "^1.0.0",
+        "express": "^4.18.2",
+        "socket.io": "^4.7.2",
+        "socket.io-client": "^4.4.0"
+    },
+    "devDependencies": {
+        "@electron-forge/cli": "^6.4.1",
+        "@electron-forge/maker-deb": "^6.4.1",
+        "@electron-forge/maker-rpm": "^6.4.1",
+        "@electron-forge/maker-squirrel": "^6.4.1",
+        "@electron-forge/maker-zip": "^6.4.1",
+        "@electron-forge/plugin-auto-unpack-natives": "^6.4.1",
+        "electron": "^26.1.0"
+    }
+}
