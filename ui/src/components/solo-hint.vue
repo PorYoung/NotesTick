@@ -146,6 +146,8 @@ export default {
 			readyText: "点我准备 ",
 			startTime: "",
 			progress: 0,
+			releasedIdx: -1, // midi notes中已经播放完成的音符索引
+			pausedIdx: -1,
 			/* 用户相关变量 */
 			userId: "",
 			name: "",
@@ -501,9 +503,19 @@ export default {
 		handlePlay() {
 			this.isPlay = !this.isPlay;
 			if (!this.isPlay) {
+				this.pausedIdx = this.releasedIdx;
 				this.cleanPlayer();
 			} else {
 				this.$refs.piano.$emit("continueRain");
+				// 播放notes
+				this.playCurrentNotesTimer(
+					this.midiNotes,
+					this.blankTime,
+					this.notesResources.slice(
+						this.allocStartPos,
+						this.allocEndPos > 0 ? this.allocEndPos + 1 : 0
+					)
+				);
 			}
 		},
 		exitOnError(err) {

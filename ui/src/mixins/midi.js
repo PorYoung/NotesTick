@@ -78,8 +78,13 @@ export default {
 			});
 		},
 		playCurrentNotesTimer(notes, blankTime = 1000, skipNotes = []) {
-			this.midiNotes.forEach((note) => {
+			this.midiNotes.forEach((note, index) => {
 				if (skipNotes.includes(note.name)) return;
+				if (index <= this.pausedIdx) return;
+				if (this.pausedIdx >= 0) {
+					const pausedNote = this.midiNotes[this.pausedIdx];
+					blankTime -= (pausedNote.time + pausedNote.duration) * 1000;
+				}
 
 				const playTimer = setTimeout(() => {
 					this.instrument.triggerAttack(
@@ -95,6 +100,8 @@ export default {
 						blankTime + (note.duration + note.time) * 1000
 					);
 					this.notesPlayTimers.delete(releaseTimer);
+					this.releasedIdx =
+						index > this.releasedIdx ? index : this.releasedIdx;
 				});
 				this.notesPlayTimers.add(playTimer);
 				this.notesPlayTimers.delete(releaseTimer);
@@ -138,6 +145,7 @@ export default {
 				clearTimeout(timer);
 			}
 			this.notesPlayTimers.clear();
+			this.releasedIdx = -1;
 		},
 	},
 };
