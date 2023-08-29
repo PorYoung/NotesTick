@@ -8,7 +8,7 @@
 				<h3>
 					<router-link
 						class="color-link"
-						:to="`/solo-hint?room=${this.room}&midi=${this.selectedMidi}&${this.velocity}=1&maxKeys=${this.maxKeys}&auto=${this.auto}`"
+						:to="`/solo-hint?room=${this.room}&midi=${this.selectedMidi}&velocity=${this.velocity}&maxKeys=${this.maxKeys}&auto=${this.auto}`"
 						>Solo</router-link
 					>
 				</h3>
