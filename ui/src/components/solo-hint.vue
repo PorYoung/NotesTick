@@ -50,6 +50,7 @@
 					<button
 						class="btn"
 						@click="handlePlay"
+						:disabled="this.userId !== this.roomCreator"
 					>
 						{{ this.isPlay ? "暂停" : "播放" }}
 					</button>
@@ -153,7 +154,7 @@ export default {
 			},
 			readyIds: [],
 			ignorePreventKeys: ["F11", "F12", "F5"],
-			isPlay: true
+			isPlay: true,
 		};
 	},
 	mounted() {
@@ -497,16 +498,13 @@ export default {
 			this.instrument && this.instrument.releaseAll();
 			this.cleanPlayTimer();
 		},
-		handlePlay(){
-			this.isPlay = !this.isPlay
-			if(!this.isPlay) {
-				this.$refs.piano.$emit("stopRain");
-				this.instrument && this.instrument.releaseAll();
-				this.cleanPlayTimer();
-			}else {
+		handlePlay() {
+			this.isPlay = !this.isPlay;
+			if (!this.isPlay) {
+				this.cleanPlayer();
+			} else {
 				this.$refs.piano.$emit("continueRain");
 			}
-			
 		},
 		exitOnError(err) {
 			this.$message.error(`${err} 【即将返回首页!】`);
