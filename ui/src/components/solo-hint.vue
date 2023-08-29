@@ -18,7 +18,7 @@
 		</el-main>
 		<el-footer>
 			<el-row :gutter="2">
-				<el-col :span="8">
+				<el-col :span="6">
 					<button
 						class="btn"
 						:disabled="this.started"
@@ -27,7 +27,7 @@
 						{{ this.started ? "游戏已开始" : readyText }}
 					</button>
 				</el-col>
-				<el-col :span="8">
+				<el-col :span="6">
 					<button
 						class="btn"
 						:disabled="
@@ -45,7 +45,15 @@
 						}}
 					</button>
 				</el-col>
-				<el-col :span="8"> 网络延迟:{{ latency }} ms </el-col>
+				<el-col :span="6"> 网络延迟:{{ latency }} ms </el-col>
+				<el-col :span="6">
+					<button
+						class="btn"
+						@click="handlePlay"
+					>
+						{{ this.isPlay ? "暂停" : "播放" }}
+					</button>
+				</el-col>
 			</el-row>
 
 			<el-row ref="usersMap" :gutter="1" type="flex">
@@ -145,6 +153,7 @@ export default {
 			},
 			readyIds: [],
 			ignorePreventKeys: ["F11", "F12", "F5"],
+			isPlay: true
 		};
 	},
 	mounted() {
@@ -487,6 +496,17 @@ export default {
 			this.$refs.piano.$emit("stopRain");
 			this.instrument && this.instrument.releaseAll();
 			this.cleanPlayTimer();
+		},
+		handlePlay(){
+			this.isPlay = !this.isPlay
+			if(!this.isPlay) {
+				this.$refs.piano.$emit("stopRain");
+				this.instrument && this.instrument.releaseAll();
+				this.cleanPlayTimer();
+			}else {
+				this.$refs.piano.$emit("continueRain");
+			}
+			
 		},
 		exitOnError(err) {
 			this.$message.error(`${err} 【即将返回首页!】`);

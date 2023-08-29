@@ -99,6 +99,8 @@ export default {
 			hintEarlyTime: 1000,
 			hintedBlocks: [],
 			remotePressedNotes: [],
+			updatedBlocks: [],
+			isPlay: true
 		};
 	},
 	methods: {
@@ -255,10 +257,13 @@ export default {
 					notesBlocks,
 					lastTime
 				);
+				this.updatedBlocks = updatedBlocks
 				cancelAnimationFrame(this.animationId);
-				if (updatedBlocks.length > 0) {
+				if (updatedBlocks.length > 0 && this.isPlay) {
 					this.$emit("progress", +new Date());
-					this.draw(updatedBlocks, now);
+					this.draw(this.updatedBlocks, now);
+				} else if (updatedBlocks.length > 0 && !this.isPlay){
+					return
 				} else {
 					this.$emit("finished", true);
 				}
@@ -305,7 +310,12 @@ export default {
 				this.createNote();
 			}
 		);
+		this.$on("continueRain", () => {
+			this.isPlay = true
+			this.draw(this.updatedBlocks, +new Date());
+		})
 		this.$on("stopRain", () => {
+			this.isPlay = false
 			this.notes = [];
 			Tone.Transport.stop();
 		});
