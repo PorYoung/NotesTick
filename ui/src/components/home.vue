@@ -18,7 +18,9 @@
 					>
 				</h3>
 				<h3>
-					<router-link class="color-link" to="/fullScreen"
+					<router-link 
+						class="color-link" 
+						:to="`/fullScreen?room=${this.room}&midi=${this.selectedMidi}&velocity=${this.velocity}&maxKeys=${this.maxKeys}&auto=${this.auto}`"
 						>fullScreen</router-link
 					>
 				</h3>

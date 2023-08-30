@@ -1,6 +1,6 @@
 <!--
   @name: fullScreen.vue
-  @date: 2023-08-16
+  @date: 2023-08-12
   @version：0.0.1
   @describe: 全屏模式页面
 -->
@@ -8,7 +8,10 @@
 <template>
 	<el-container v-loading.fullscreen.lock="preloading" class="main-wrapper">
 		<el-header>
-			<el-progress :percentage="50" status="exception"></el-progress>
+			<el-progress
+				:percentage="progress"
+				status="exception"
+			></el-progress>
 		</el-header>
 		<el-main>
 			<fullScreenPiano ref="piano" />
@@ -22,7 +25,6 @@
 						@click="toReady"
 					>
 						{{ this.started ? "游戏已开始" : readyText }}
-						{{ _len(readyIds) }} / {{ _len(usersMap) }} 玩家已准备
 					</button>
 				</el-col>
 				<el-col :span="6">
@@ -37,15 +39,25 @@
 					>
 						{{
 							this.userId === this.roomCreator
-								? "开始游戏"
+								? `开始游戏 (${_len(readyIds)}
+						/ ${_len(usersMap)} 玩家已准备)`
 								: "等待游戏开始"
 						}}
 					</button>
 				</el-col>
-				<el-col :span="6" v-show="false"> 网络延迟:{{ latency }} ms </el-col>
+				<el-col :span="6"> 网络延迟:{{ latency }} ms </el-col>
+				<el-col :span="6">
+					<button
+						class="btn"
+						@click="handlePlay"
+						:disabled="this.userId !== this.roomCreator"
+					>
+						{{ this.isPlay ? "暂停" : "播放" }}
+					</button>
+				</el-col>
 			</el-row>
 
-			<el-row ref="usersMap" :gutter="1" type="flex" v-show="false">
+			<el-row ref="usersMap" :gutter="1" type="flex">
 				<el-col
 					:span="3"
 					:key="item.id"
@@ -65,18 +77,27 @@
 			:close-on-press-escape="false"
 			:show-close="false"
 			:center="true"
+			:before-close="() => {}"
 			width="30%"
-			:before-close="handleClose"
 		>
-			<el-input placeholder="如：admin" v-model="name">
-				<template slot="prepend">请输入您的名字</template>
-			</el-input>
+			<el-form>
+				<el-form-item>
+					<el-input placeholder="如：admin" v-model="name">
+						<template slot="prepend">请输入您的名字</template>
+					</el-input>
+				</el-form-item>
+			</el-form>
 			<span slot="footer" class="dialog-footer">
 				<el-button type="primary" @click="confirmInputName"
 					>确 定</el-button
 				>
 			</span>
 		</el-dialog>
+		<div class="logo-rain" v-if="finished">
+			<img src="@static/images/cgb.png" class="logo-rain-item" />
+			<img src="@static/images/cgb.png" class="logo-rain-item" />
+			<h2 class="animate__animated animate__zoomIn">✨🎉音乐完成✨🎉</h2>
+		</div>
 	</el-container>
 </template>
 
@@ -86,8 +107,9 @@ import fullScreenPiano from "./fullScreenPiano.vue";
 import CommonMixin from "@/mixins/common";
 import InstrumentsMixin from "@/mixins/instruments";
 import MidiMixin from "@/mixins/midi";
+import animate from "animate.css";
 export default {
-	name: "Solo",
+	name: "fullScreen",
 	mixins: [CommonMixin, InstrumentsMixin, MidiMixin],
 	components: { fullScreenPiano },
 	data() {
@@ -101,6 +123,7 @@ export default {
 			socket: null,
 			latency: 0,
 			roomCreator: "",
+			room: "cgb",
 			/* 音符资源 */
 			notesResources: [], // 乐曲涉及的全部音符
 			allocStartPos: 0, // 音符资源中起始被分配的音符的位置
@@ -110,23 +133,21 @@ export default {
 			allAuto: false,
 			loadedServerResources: false,
 			started: false,
+			finished: false,
+			maxKeys: 6,
 			toStartTime: 3000, // 正式启动倒计时ms
 			blankTime: 1000,
-			keyboardList: ["a", "s", "d", "f", "j", "k", "l"],
-			keyNotesMap: {
-				a: "C4",
-				s: "D4",
-				d: "E4",
-				f: "F4",
-				j: "G4",
-				k: "A4",
-				l: "B4",
-			},
+			keyboardList: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+			keyNotesMap: {},
+			noteKeysMap: {},
 			keyPressed: new Set(),
 			keyLock: false,
 			ready: false,
-			readyText: "您尚未准备",
+			readyText: "点我准备 ",
 			startTime: "",
+			progress: 0,
+			releasedIdx: -1, // midi notes中已经播放完成的音符索引
+			pausedIdx: -1,
 			/* 用户相关变量 */
 			userId: "",
 			name: "",
@@ -134,22 +155,42 @@ export default {
 				name: "",
 			},
 			readyIds: [],
-			/* 音符雨 */
+			ignorePreventKeys: ["F11", "F12", "F5"],
+			isPlay: true,
 		};
 	},
 	mounted() {
 		this.preloading = false;
+		this.$refs.piano.$on("finished", () => {
+			this.finished = true;
+			this.progress = 100;
+			this.socket.emit("GAME_OVER");
+		});
+		this.$refs.piano.$on("progress", (now) => {
+			const last = this.midiNotes.slice(-1).pop();
+			this.progress = last
+				? ((now - this.startTime) /
+						(this.blankTime + last.time * 1000)) *
+				  100
+				: 0;
+		});
 	},
 	methods: {
 		confirmInputName() {
 			this.dialogVisible = false;
 			const name = this.name.trim();
 			if (name != "") {
-				const { midi, velocity, auto } = this.$route.query;
+				const { room, midi, velocity, auto, maxKeys } =
+					this.$route.query;
 				this.name = name;
 				this.midiName = midi || this.midiName;
 				this.vRatio = velocity || this.vRatio;
-				this.allAuto = auto || this.allAuto;
+				this.allAuto = auto === "true" || this.allAuto;
+				this.room = room || this.room;
+				this.maxKeys =
+					maxKeys > 0 && maxKeys <= this.keyboardList.length
+						? maxKeys
+						: this.maxKeys;
 				return this.createSocket(name.trim());
 			}
 			this.exitOnError("无效输入.");
@@ -163,10 +204,11 @@ export default {
 				query: {
 					name,
 					mode: "solo",
-					room: "cgb",
+					room: this.room,
 					midiName: this.midiName,
 					vRatio: this.vRatio,
 					allAuto: this.allAuto,
+					maxNotesMapNum: this.maxKeys,
 				},
 			});
 			this.name = name;
@@ -224,7 +266,6 @@ export default {
 			this.exitOnError(data.errMsg);
 		},
 		onUpdatePlayers(data) {
-			console.log(data);
 			this.updatePlayersList(data.usersMap);
 		},
 		onResources(data) {
@@ -251,19 +292,18 @@ export default {
 			this.userNotesMap = data.userNotesMap;
 			this.allocStartPos = data.allocStartPos;
 			this.allocEndPos = data.allocEndPos;
-			console.log(data);
+			console.debug(data);
 
-			console.log(data);
-
-			if (this.userId === data.userId) {
-				// 创建键盘映射
-				const notes = this.userNotesMap[this.userId] || [];
-				const keyNotesMap = {};
-				notes.forEach((note, index) => {
-					keyNotesMap[this.keyboardList[index]] = note;
-				});
-				this.keyNotesMap = keyNotesMap;
-			}
+			// 创建键盘映射
+			const notes = this.userNotesMap[this.userId] || [];
+			const keyNotesMap = {};
+			const noteKeysMap = {};
+			notes.forEach((note, index) => {
+				keyNotesMap[this.keyboardList[index]] = note;
+				noteKeysMap[note] = this.keyboardList[index];
+			});
+			this.keyNotesMap = keyNotesMap;
+			this.noteKeysMap = noteKeysMap;
 		},
 		onBroadcastNote(data) {
 			// {
@@ -274,11 +314,15 @@ export default {
 			// }
 			if (data.userId === this.userId) return;
 
+			console.log(data);
+
 			// 播放音符声音
 			this.playSound(data.note);
 
 			// 闪烁头像
 			this.blinkAvatar(data.userId);
+
+			this.$refs.piano.$emit("remotePressed", data.note);
 		},
 		onReleaseNote(data) {
 			// {
@@ -293,18 +337,21 @@ export default {
 			this.stopSound(data.note);
 
 			// 闪烁头像
-			this.blinkAvatar(data.id);
+			this.blinkAvatar(data.userId);
+
+			this.$refs.piano.$emit("remoteReleased", data.note);
 		},
 		onStartEvent(data) {
 			this.preloading = false;
 			this.started = true;
 			const notes = this.midiNotes;
 			const _toStartTime = this.toStartTime;
+			this.startTime = +new Date();
 			const countFun = () => {
 				this.$message.success(`倒计时 ${this.toStartTime / 1000}`);
 				this.toStartTime -= 1000;
 				if (this.toStartTime > 0) {
-					setTimeout(countFun, 1000);
+					const timer = setTimeout(countFun, 1000);
 				} else {
 					this.toStartTime = _toStartTime;
 					// 启动音乐雨
@@ -313,7 +360,11 @@ export default {
 						notes,
 						this.blankTime,
 						this.notesResources,
-						this.userNotesMap[this.userId]
+						this.userNotesMap[this.userId],
+						this.keyNotesMap,
+						this.noteKeysMap,
+						this.allocStartPos,
+						this.allocEndPos
 					);
 					// 播放notes
 					this.playCurrentNotesTimer(
@@ -338,7 +389,7 @@ export default {
 				return;
 			}
 			this.ready = !this.ready;
-			this.readyText = this.ready ? "取消准备" : "您尚未准备";
+			this.readyText = this.ready ? "取消准备" : "点我准备";
 			if (this.ready) {
 				// 显示加载动画
 				this.preloading = true;
@@ -388,8 +439,11 @@ export default {
 			window.addEventListener("keyup", this.onKeyUp);
 		},
 		onKeyDown(e) {
-			e.key != "F11" && e.preventDefault();
 			if (!this.ready || !this.instrument) return;
+			// !this.ignorePreventKeys.includes(e.key) && e.preventDefault();
+			if (e.key in this.keyNotesMap) {
+				e.preventDefault();
+			}
 
 			if (e.key in this.keyNotesMap && !this.keyPressed.has(e.key)) {
 				const note = this.keyNotesMap[e.key];
@@ -402,7 +456,7 @@ export default {
 					note,
 					tickTime: +new Date() - this.startTime,
 				});
-				this.blinkAvatar();
+				this.blinkAvatar(this.userId);
 			}
 		},
 		onKeyUp(e) {
@@ -427,7 +481,6 @@ export default {
 		// 创建音频元素
 		// 播放音符的函数
 		playSound(note) {
-			console.log("播放音符声音", note);
 			this.instrument.triggerAttack(note);
 		},
 		stopSound(note) {
@@ -442,23 +495,70 @@ export default {
 		updatePlayersList(data) {
 			this.usersMap = data;
 		},
-		exitOnError(err) {
-			this.$message.error(`${err} 【即将返回首页!】`);
+		cleanPlayer() {
 			this.$refs.piano.$emit("stopRain");
 			this.instrument && this.instrument.releaseAll();
+			this.cleanPlayTimer();
+		},
+		handlePlay() {
+			this.isPlay = !this.isPlay;
+			if (!this.isPlay) {
+				this.pausedIdx = this.releasedIdx;
+				this.cleanPlayer();
+			} else {
+				this.$refs.piano.$emit("continueRain");
+				// 播放notes
+				this.playCurrentNotesTimer(
+					this.midiNotes,
+					this.blankTime,
+					this.notesResources.slice(
+						this.allocStartPos,
+						this.allocEndPos > 0 ? this.allocEndPos + 1 : 0
+					)
+				);
+			}
+		},
+		exitOnError(err) {
+			this.$message.error(`${err} 【即将返回首页!】`);
+			this.cleanPlayer();
 			setTimeout(() => {
 				this.$router.replace("/home");
 			}, 1500);
 		},
+	},
+	beforeDestroy() {
+		this.cleanPlayer();
 	},
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-.el-container {
+@import "@/styles/solo.scss";
+
+.logo-rain {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
 	overflow: hidden;
-	height: 100vh !important;
+
+	&-item {
+		position: absolute;
+		width: 460px;
+		height: 400px;
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		&:nth-child(1) {
+			animation: logoAnimationLeft 3s 1;
+			animation-fill-mode: forwards;
+		}
+		&:nth-child(2) {
+			animation: logoAnimationRight 3s 1;
+			animation-fill-mode: forwards;
+		}
+	}
 }
 .el-header {
 	height: 0vh !important;
@@ -468,5 +568,34 @@ export default {
 }
 .el-footer {
 	height: 4vh !important;
+}
+@keyframes logoAnimationLeft {
+	0% {
+		transform: rotate(0deg) scale(1);
+		top: 0;
+		left: 0;
+		opacity: 0;
+	}
+	100% {
+		transform: rotate(720deg) scale(0.5);
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		opacity: 1;
+	}
+}
+
+@keyframes logoAnimationRight {
+	0% {
+		transform: rotate(0deg) scale(1);
+		top: 0;
+		left: 100%;
+		opacity: 0;
+	}
+	100% {
+		transform: rotate(720deg) scale(0.5);
+		top: calc(50% - 300px);
+		left: calc(50% - 225px);
+		opacity: 1;
+	}
 }
 </style>
