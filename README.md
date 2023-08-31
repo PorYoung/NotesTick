@@ -1,5 +1,11 @@
 # NotesTick
 
+## 环境
+
+前端：node v14.16
+
+后端（electron）：node v16.14
+
 ## 桌面应用
 
 访问[程序发布](https://github.com/PorYoung/NotesTick/releases)下载最新编译的可执行程序使用。

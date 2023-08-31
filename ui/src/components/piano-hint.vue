@@ -100,7 +100,7 @@ export default {
 			hintedBlocks: [],
 			remotePressedNotes: [],
 			updatedBlocks: [],
-			isPlay: true
+			isPlay: true,
 		};
 	},
 	methods: {
@@ -154,7 +154,7 @@ export default {
 			const passed = now - lastTime;
 			notesBlocks.forEach((block) => {
 				block.y += passed * this.moveVelocity;
-				if (block.y > this.HEIGHT + block.height) {
+				if (block.y >= this.HEIGHT + block.height) {
 					// 在按键提示列表中移除当前音符
 					this.hintedBlocks = this.hintedBlocks.filter(
 						(item) => item.id !== block.id
@@ -162,7 +162,7 @@ export default {
 				}
 			});
 			const updatedBlocks = notesBlocks.filter((block) => {
-				return block.y <= this.HEIGHT + block.height;
+				return block.y < this.HEIGHT + block.height;
 			});
 
 			return { updatedBlocks, now };
@@ -257,13 +257,13 @@ export default {
 					notesBlocks,
 					lastTime
 				);
-				this.updatedBlocks = updatedBlocks
+				this.updatedBlocks = updatedBlocks;
 				cancelAnimationFrame(this.animationId);
 				if (updatedBlocks.length > 0 && this.isPlay) {
 					this.$emit("progress", +new Date());
 					this.draw(this.updatedBlocks, now);
-				} else if (updatedBlocks.length > 0 && !this.isPlay){
-					return
+				} else if (updatedBlocks.length > 0 && !this.isPlay) {
+					return;
 				} else {
 					this.$emit("finished", true);
 				}
@@ -311,11 +311,11 @@ export default {
 			}
 		);
 		this.$on("continueRain", () => {
-			this.isPlay = true
+			this.isPlay = true;
 			this.draw(this.updatedBlocks, +new Date());
-		})
+		});
 		this.$on("stopRain", () => {
-			this.isPlay = false
+			this.isPlay = false;
 			this.notes = [];
 			Tone.Transport.stop();
 		});
