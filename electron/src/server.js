@@ -3,15 +3,15 @@ const express = require("express");
 const app = express();
 
 const http = require("http").createServer(app);
-const server = app.listen(3000, function () {
-	console.log("server running on port 3000");
+const server = app.listen(3322, function () {
+	console.log("server running on port 3322");
 });
 const io = require("socket.io")(server, {
 	cors: {
 		origin: "*",
 	},
 });
-const solo = require("./app/solo");
+const coOpGame = require("./app/co-op");
 
 //跨域问题解决方面
 const cors = require("cors");
@@ -43,15 +43,14 @@ app.use(
 
 // 连接前检查
 io.use((socket, next) => {
-	solo.preInterceptor(socket, next);
+	coOpGame.preInterceptor(socket, next);
 });
 
 // 客户端连接事件
 io.on("connection", (socket) => {
 	console.log("A user connected", socket.id);
-	const { name, mode, room } = socket.handshake.query;
 
-	solo.createSoloEnv(io, socket);
+	coOpGame.createCoOpEnv(io, socket);
 });
 
 // HTTP Server
