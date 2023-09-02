@@ -2,7 +2,7 @@
 
 TODO
 
-[] 使用Vue3和TypeScript重构代码
+- [ ] 使用Vue3和TypeScript重构代码
 
 ## 桌面应用
 
