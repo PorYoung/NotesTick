@@ -1,10 +1,8 @@
 # NotesTick
 
-## 环境
+TODO
 
-前端：node v14.16
-
-后端（electron）：node v16.14
+[] 使用Vue3和TypeScript重构代码
 
 ## 桌面应用
 
@@ -25,9 +23,3 @@
 | midi           | string  | 音乐文件（默认 `"我爱你中国.mid"` |
 
 ## Test
-
-1. 全自动(`auto=true`)，慢速(`velocity=0.3`)播放虫儿飞(`midi=虫儿飞.mid`)音乐，默认用户(`admin`)
-
-```
-http://localhost:8080/#/solo-hint?midi=虫儿飞.mid&velocity=0.3&auto=true
-```
