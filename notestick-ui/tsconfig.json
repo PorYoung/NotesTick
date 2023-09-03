@@ -31,6 +31,7 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
+        "allowJs": true,
         /* element ui */
         "types": [
             "element-plus/global"
