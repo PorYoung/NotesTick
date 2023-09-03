@@ -1,10 +1,10 @@
 <template>
   <div class="home">
     <h1>Notes Tick Music Game</h1>
-    <!-- 模式选择 -->
     <el-row class="mode-selector" :gutter="20">
-      <el-col :span="12">
-        <h2>选择模式</h2>
+      <!-- 模式选择 -->
+      <el-col :span="8">
+        <h2>游戏模式</h2>
         <h3>
           <router-link
             class="color-link"
@@ -13,39 +13,61 @@
           >
         </h3>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="16">
         <h2>当前游戏参数</h2>
         <el-form>
-          <el-form-item label="用户名">
-            <el-input v-model:value="name" placeholder="如：admin"></el-input>
-          </el-form-item>
-          <el-form-item label="房间名称">
-            <el-input v-model:value="room" placeholder="房间名称"></el-input>
-          </el-form-item>
-          <el-form-item label="音乐名称">
-            <el-input
-              v-model:value="selectedMidi"
-              placeholder="音乐名称"
-            ></el-input>
-          </el-form-item>
-          <el-form-item label="游戏速度">
-            <el-input
-              v-model:value="velocity"
-              placeholder="游戏速度(1为原速)"
-            ></el-input>
-          </el-form-item>
-          <el-form-item label="最大按键数">
-            <el-input
-              v-model:value="maxKeys"
-              placeholder="最大按键数(0~10)"
-            ></el-input>
-          </el-form-item>
-          <el-form-item label="自动播放">
-            <el-checkbox v-model="auto"></el-checkbox>
-          </el-form-item>
-          <el-form-item label="全屏模式">
-            <el-checkbox v-model="fullScreen"></el-checkbox>
-          </el-form-item>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="用户名">
+                <el-input v-model="name" placeholder="如：admin"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="房间名称">
+                <el-input v-model="room" placeholder="房间名称"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="音乐名称">
+                <el-input
+                  v-model="selectedMidi"
+                  placeholder="音乐名称"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="游戏速度">
+                <el-input
+                  v-model="velocity"
+                  placeholder="游戏速度(1为原速)"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="最大按键数">
+                <el-input
+                  v-model="maxKeys"
+                  placeholder="最大按键数(0~10)"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="自动播放">
+                <el-checkbox v-model="auto"></el-checkbox>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="全屏模式">
+                <el-checkbox v-model="fullScreen"></el-checkbox>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </el-form>
       </el-col>
     </el-row>
