@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory, Router } from "vue-router";
-import nprogress from "nprogress";
+import * as nprogress from "nprogress";
 import "nprogress/nprogress.css";
 import Home from "@/components/home/index.vue";
 import CoOpGame from "@/components/co-op/index.vue";
@@ -24,7 +24,7 @@ const router: Router = createRouter({
   ],
 });
 
-router.beforeEach((to, from) => {
+router.beforeEach(() => {
   nprogress.start();
 });
 

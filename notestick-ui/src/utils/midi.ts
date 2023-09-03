@@ -1,6 +1,6 @@
 import * as Tone from "tone";
 import { Midi, Track } from "@tonejs/midi";
-import { NoteJSON } from "@tonejs/midi/dist/Note";
+import { NoteJSON, Note } from "@tonejs/midi/dist/Note";
 import { ElMessage } from "element-plus";
 import { CustomInstrument } from "./instruments";
 
@@ -14,19 +14,20 @@ export class MidiController {
   pausedIdx: number = -1; // 暂停时的音符索引
   releasedIdx: number = -1; // 恢复播放时的音符索引
   vRatio: number = 0.75; // 播放速率
+  midiName: string = "";
 
   constructor(instrument: CustomInstrument) {
     this.instrument = instrument;
   }
 
   /* 请求Midi文件信息并获取音符列表 */
-  async getMidiJson(midiName: string) {
-    const midiUrl = `/static/midi/${midiName}`;
+  async getMidiJson() {
+    const midiUrl = `/static/midi/${this.midiName}`;
     const midi = await Midi.fromUrl(midiUrl);
 
     // 获取所有音符信息
     const notes = midi.tracks.reduce(
-      (allNotes: NoteJSON[], track: Track) => allNotes.concat(track.notes),
+      (allNotes: Note[], track: Track) => allNotes.concat(track.notes),
       []
     );
     this.midiNotes = notes;

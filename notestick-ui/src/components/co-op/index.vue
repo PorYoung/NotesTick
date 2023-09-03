@@ -46,15 +46,19 @@
         </el-col>
       </el-row>
 
-      <el-row :gutter="1" v-if="!isFullScreen">
+      <el-row :gutter="20" v-if="!isFullScreen">
         <el-col
           :span="3"
           v-for="item in usersMap"
           class="player"
           :key="item.id"
         >
-          <img src="assets/images/avatar.jpg" />
-          <span>{{ item.name }}</span>
+          <el-row justify="center">
+            <img src="@/assets/images/avatar.jpg" />
+          </el-row>
+          <el-row justify="center">
+            <span>{{ item.name }}</span>
+          </el-row>
         </el-col>
       </el-row>
     </el-footer>
@@ -74,8 +78,8 @@
       </div>
     </el-dialog>
     <div class="logo-rain" v-if="finished">
-      <img src="assets/images/cgb.png" class="logo-rain-item" />
-      <img src="assets/images/cgb.png" class="logo-rain-item" />
+      <img src="@/assets/images/cgb.png" class="logo-rain-item" />
+      <img src="@/assets/images/cgb.png" class="logo-rain-item" />
       <h2 class="animate__animated animate__zoomIn">✨🎉音乐完成✨🎉</h2>
     </div>
   </el-container>
@@ -90,7 +94,7 @@ import * as tools from "@/utils/tools";
 import { buildMidiController, MidiController } from "@/utils/midi";
 import { buildInstrumentAsync, CustomInstrument } from "@/utils/instruments";
 import NoteRain from "./components/note-rain.vue";
-import { NoteJSON } from "@tonejs/midi/dist/Note";
+import { NoteJSON, Note } from "@tonejs/midi/dist/Note";
 
 const { _len } = { ...tools }; //工具函数
 
@@ -148,25 +152,23 @@ const keyboardList = ref(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]);
 const keyNotesMap = ref<{ [key: string]: any }>({});
 const noteKeysMap = ref({});
 const keyPressed = ref<Set<string>>(new Set());
-const keyLock = ref(false);
+// const keyLock = ref(false);
 const ready = ref(false);
 const readyText = ref("点我准备 ");
 const startTime = ref(0);
 const progress = ref(0);
 const releasedIdx = ref(-1); // midi notes中已经播放完成的音符索;
-const pausedIdx = ref(-1);
 const isPlay = ref(true);
-const ignorePreventKeys = ref(["F11", "F12", "F5"]);
+// const ignorePreventKeys = ref(["F11", "F12", "F5"]);
 
 /* 用户相关变量 */
 const userId = ref("");
-const usersMap = ref<{
-  id: string;
-  name: string;
-}>({
-  id: "",
-  name: "",
-});
+const usersMap = ref<
+  {
+    id: string;
+    name: string;
+  }[]
+>([]);
 const readyIds = ref([]);
 
 /* Instrument 部分 */
@@ -206,7 +208,7 @@ const onFinished = () => {
   socket.value.emit("GAME_OVER");
 };
 const onProgress = (now: number) => {
-  const last: NoteJSON = midiNotes.value.slice(-1).pop();
+  const last: NoteJSON | undefined = midiNotes.value.slice(-1).pop();
   progress.value = last
     ? ((now - startTime.value) / (blankTime.value + last.time * 1000)) * 100
     : 0;
@@ -323,11 +325,11 @@ const onResources = (data: any) => {
   notesResources.value = data.notesResources;
   readyIds.value = data.readyIds;
   roomCreator.value = data.creator;
-  midiName.value = data.midiName;
+  !!midiCtx && (midiCtx.midiName = data.midiName);
   !!midiCtx && (midiCtx.vRatio = data.vRatio);
 
   // 请求midi数据
-  midiCtx?.getMidiJson(data.midiName).then((notes: Note[]) => {
+  midiCtx?.getMidiJson().then((notes: Note[]) => {
     const vRatio = midiCtx?.vRatio || 1;
     midiNotes.value = notes.map((note) => {
       note.time /= vRatio;
@@ -516,7 +518,7 @@ const stopSound = (note: string) => {
 
 const handlePlay = () => {
   isPlay.value = !isPlay;
-  if (!isPlay) {
+  if (!isPlay.value) {
     !!midiCtx && (midiCtx.pausedIdx = releasedIdx.value);
     cleanPlayer();
   } else {
