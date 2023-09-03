@@ -14,6 +14,9 @@
           active: activeNotes.includes(note),
           'bind-key': bindNotes.includes(note),
           'remote-pressed': remotePressedNotes.includes(note),
+          hinted:
+            !bindNotes.includes(note) &&
+            hintedBlocks.some((item) => item.name === note),
         }"
       >
         {{

@@ -361,12 +361,6 @@ const onReadyEvent = (data: any) => {
 };
 
 const onBroadcastNote = (data: any) => {
-  // {
-  //     note /* 音符 */,
-  //     tickTime /* 音符在客户端的相对触发时间 */,
-  //     time /* 音符的规定触发时间 */,
-  //     duration /* 音符的规定持续时间 */,
-  // }
   if (data.userId === userId) return;
 
   console.log(data);
