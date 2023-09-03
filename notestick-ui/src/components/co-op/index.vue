@@ -1,5 +1,8 @@
 <template>
-  <el-container v-loading.fullscreen.lock="preloading" class="main-wrapper">
+  <el-container
+    v-loading.fullscreen.lock="preloading"
+    :class="{ 'main-wrapper': true, fullscreen: isFullScreen }"
+  >
     <el-header>
       <el-progress :percentage="progress" status="exception"></el-progress>
     </el-header>
@@ -43,7 +46,7 @@
         </el-col>
       </el-row>
 
-      <el-row :gutter="1" type="flex">
+      <el-row :gutter="1" v-if="!isFullScreen">
         <el-col
           :span="3"
           v-for="item in usersMap"
@@ -79,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, toRef } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElDialog } from "element-plus";
 import io from "socket.io-client";
@@ -88,7 +91,6 @@ import { buildMidiController, MidiController } from "@/utils/midi";
 import { buildInstrumentAsync, CustomInstrument } from "@/utils/instruments";
 import NoteRain from "./components/note-rain.vue";
 import { NoteJSON } from "@tonejs/midi/dist/Note";
-import * as Tone from "tone";
 
 const { _len } = { ...tools }; //工具函数
 
@@ -98,6 +100,36 @@ const route = useRoute();
 /* 页面参数 */
 const preloading = ref(true);
 const dialogVisible = ref(true);
+const isFullScreen = computed(() => {
+  return route.query.fullScreen === "true";
+});
+// 用户名
+const name = computed(() => {
+  return (route.query.name as string).trim();
+});
+// 房间名称
+const room = computed(() => {
+  return route.query.room as string;
+});
+// midi 文件名
+const midiName = computed(() => {
+  return route.query.midi as string;
+});
+// 播放速度
+const velocity = computed(() => {
+  const _v = Number.parseFloat(route.query.velocity as string);
+  return Number.isNaN(_v) && _v > 0 ? 1 : _v;
+});
+// 是否自动播放
+const allAuto = computed(() => {
+  return route.query.auto === "true";
+});
+const maxKeys = computed(() => {
+  const _mk = Number.parseInt(route.query.maxKeys as string);
+  return Number.isInteger(_mk) && _mk > 0 && _mk <= keyboardList.value.length
+    ? _mk
+    : 6;
+});
 
 /* 音符资源 */
 const midiNotes = ref<NoteJSON[]>([]);
@@ -105,12 +137,11 @@ const notesResources = ref([]); // 乐曲涉及的全部音符
 const allocStartPos = ref(0); // 音符资源中起始被分配的音符的位;
 const allocEndPos = ref(0); // 音符资源中最后被分配的音符的位;
 const userNotesMap = ref<{ [key: string]: any }>({}); // 用户与分配的音符映;
+
 /* 音符控制相关变量 */
-const allAuto = ref(false);
 const loadedServerResources = ref(false);
 const started = ref(false);
 const finished = ref(false);
-const maxKeys = ref(6);
 const toStartTime = ref(3000); // 正式启动倒计时m;
 const blankTime = ref(1000);
 const keyboardList = ref(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]);
@@ -124,9 +155,11 @@ const startTime = ref(0);
 const progress = ref(0);
 const releasedIdx = ref(-1); // midi notes中已经播放完成的音符索;
 const pausedIdx = ref(-1);
+const isPlay = ref(true);
+const ignorePreventKeys = ref(["F11", "F12", "F5"]);
+
 /* 用户相关变量 */
 const userId = ref("");
-const name = ref("");
 const usersMap = ref<{
   id: string;
   name: string;
@@ -135,15 +168,12 @@ const usersMap = ref<{
   name: "",
 });
 const readyIds = ref([]);
-const ignorePreventKeys = ref(["F11", "F12", "F5"]);
-const isPlay = ref(true);
 
 /* Instrument 部分 */
 // @bug: 使用ref会导致DOM错误
 let instrument: CustomInstrument; // 播放环境
 
 /* Midi 部分 */
-const midiName = ref("");
 // @bug: 使用ref会导致DOM错误
 let midiCtx: MidiController; // midi 控制器
 
@@ -155,7 +185,9 @@ const firstConfirm = () => {
   buildInstrumentAsync("Salamander piano", (instance: CustomInstrument) => {
     instrument = instance;
     midiCtx = buildMidiController(instrument);
-    setQueryParams();
+    checkQueryParams(() => {
+      midiCtx.vRatio = velocity.value;
+    });
     createSocket(name.value);
   });
   preloading.value = false;
@@ -181,30 +213,14 @@ const onProgress = (now: number) => {
 };
 
 /* 页面加载完成时处理方法 */
-const setQueryParams = () => {
-  const {
-    name: _name,
-    room: _room,
-    midi: _midi,
-    velocity: _v,
-    auto: _auto,
-    maxKeys: _mk,
-  } = route.query;
-  if (String.call(this, _name).trim() != "") {
-    name.value = String.call(this, _name).trim();
-    midiName.value = _midi;
-    !!_v && (midiCtx.vRatio = _v);
-    !!_auto && (allAuto.value = _auto === "true");
-    !!_room && (room.value = _room);
-    maxKeys.value =
-      _mk > 0 && maxKeys.value <= keyboardList.value.length
-        ? _mk
-        : maxKeys.value;
-  } else {
-    exitOnError("无效输入.");
+const checkQueryParams = (action: Function) => {
+  if (name.value === "" || name.value === undefined) {
+    return exitOnError("无效输入.");
   }
+  action();
 };
 onMounted(() => {
+  checkQueryParams(() => {});
   preloading.value = false;
 });
 
@@ -212,7 +228,6 @@ onMounted(() => {
 const socket = ref<any>();
 const latency = ref(0);
 const roomCreator = ref("");
-const room = ref("cgb");
 
 const createSocket = (name: string) => {
   // 连接WebSocket服务器

@@ -8,15 +8,8 @@
         <h3>
           <router-link
             class="color-link"
-            :to="`/co-op?name=${name}&room=${room}&midi=${selectedMidi}&velocity=${velocity}&maxKeys=${maxKeys}&auto=${auto}`"
-            >Solo</router-link
-          >
-        </h3>
-        <h3>
-          <router-link
-            class="color-link"
-            :to="`/co-op-full?name=${name}&room=${room}&midi=${selectedMidi}&velocity=${velocity}&maxKeys=${maxKeys}&auto=${auto}`"
-            >fullScreen</router-link
+            :to="`/co-op?name=${name}&room=${room}&midi=${selectedMidi}&velocity=${velocity}&maxKeys=${maxKeys}&auto=${auto}&fullScreen=${fullScreen}`"
+            >Co-Op Game</router-link
           >
         </h3>
       </el-col>
@@ -48,7 +41,10 @@
             ></el-input>
           </el-form-item>
           <el-form-item label="自动播放">
-            <el-checkbox v-model:value="auto"></el-checkbox>
+            <el-checkbox v-model="auto"></el-checkbox>
+          </el-form-item>
+          <el-form-item label="全屏模式">
+            <el-checkbox v-model="fullScreen"></el-checkbox>
           </el-form-item>
         </el-form>
       </el-col>
@@ -89,6 +85,7 @@ export default defineComponent({
       maxKeys: "6",
       velocity: "1",
       auto: false,
+      fullScreen: false,
     };
   },
   methods: {
